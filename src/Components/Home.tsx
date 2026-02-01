@@ -820,7 +820,7 @@ const Home: React.FC = () => {
             </aside>
 
             {/* Content */}
-            <section className="flex flex-col gap-3 md:gap-4">
+            <section className="flex flex-col gap-3 md:gap-4 ">
               {loading && <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm opacity-90">Carregando CSVs…</div>}
               {err && (
                 <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm">
@@ -871,7 +871,7 @@ const Home: React.FC = () => {
                 return (
                   <div
                     key={`${fx.baseKey}-${idx}`}
-                    className="rounded-2xl border border-white/10 bg-[radial-gradient(1200px_240px_at_12%_0%,rgba(47,125,255,0.10),transparent_60%),radial-gradient(900px_220px_at_88%_0%,rgba(255,59,59,0.08),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.30))] p-3 sm:p-4 shadow-2xl"
+                    className=" my-5 rounded-2xl border border-white/10 bg-[radial-gradient(1200px_240px_at_12%_0%,rgba(47,125,255,0.10),transparent_60%),radial-gradient(900px_220px_at_88%_0%,rgba(255,59,59,0.08),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.30))] p-3 sm:p-4 shadow-2xl"
                   >
                     {/* header */}
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
@@ -983,7 +983,7 @@ const Home: React.FC = () => {
                     <details className="mt-3">
                       <summary className="cursor-pointer text-sm opacity-90">Ver TOP-12 usado (históricos)</summary>
 
-                      <div className="mt-3">
+                      <div className="mt-3 ">
                         {/* ✅ MOBILE: cards */}
                         <div className="flex flex-col gap-2 md:hidden">
                           {fx.top_rows.slice(0, 12).map((r: Record<string, string>, i: number) => {
