@@ -1,6 +1,5 @@
 // Pages/Home.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import Header from "../Components/Header";
 import Footer from "../Components/Footer";
 import { loadHomeCounter } from "../Hooks/CreateCount";
 
