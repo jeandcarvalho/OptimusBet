@@ -1,0 +1,8 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+1. FC Heidenheim 1846,1 heidenheim 1846,Heidenheim,heidenheim,0.9382,True
+1. FC Köln,1 köln,,,0.0,False
+Borussia Mönchengladbach,borussia mönchengladbach,,,0.0,False
+FC Augsburg,augsburg,Augsburg,augsburg,1.0,True
+FC St. Pauli 1910,st pauli 1910,St Pauli,st pauli,0.9423,True
+Hamburger SV,hamburger sv,Hamburg,hamburg,0.9375,True
+SV Werder Bremen,sv werder bremen,Werder Bremen,werder bremen,0.9719,True

@@ -1,0 +1,10 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+AJ Auxerre,aj auxerre,Auxerre,auxerre,0.955,True
+AS Monaco FC,as monaco,Monaco,monaco,0.95,True
+Angers SCO,angers sco,Angers,angers,0.94,True
+FC Nantes,nantes,Nantes,nantes,1.0,True
+Le Havre AC,le havre,Le Havre,le havre,1.0,True
+OGC Nice,ogc nice,Nice,nice,0.925,True
+Paris FC,paris,Paris FC,paris,1.0,True
+RC Strasbourg Alsace,rc strasbourg alsace,Strasbourg,strasbourg,0.925,True
+Stade Brestois 29,stade brestois 29,Brest,brest,0.8941,True

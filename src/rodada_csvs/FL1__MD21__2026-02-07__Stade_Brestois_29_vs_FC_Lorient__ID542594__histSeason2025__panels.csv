@@ -1,0 +1,3 @@
+﻿generated_at,competition,fixture_id,utcDate,matchday,side,team_id,team_name,pos,pts,pl,w,d,l,gf,ga,gd,gfpg_now,gapg_now,opponent_team_id,opponent_team_name,opponent_pos_now,pos_tol
+2026-02-01 18:53:17,FL1,542594,2026-02-07T18:00:00Z,21,HOME,512,Stade Brestois 29,12,23,20,6,5,9,26,33,-7,1.300,1.650,525,FC Lorient,9,3
+2026-02-01 18:53:17,FL1,542594,2026-02-07T18:00:00Z,21,AWAY,525,FC Lorient,9,28,20,7,7,6,27,31,-4,1.350,1.550,512,Stade Brestois 29,12,3

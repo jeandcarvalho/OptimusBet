@@ -1,0 +1,12 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+AJ Auxerre,aj auxerre,Auxerre,auxerre,0.955,True
+Angers SCO,angers sco,Angers,angers,0.94,True
+FC Metz,metz,Metz,metz,1.0,True
+FC Nantes,nantes,Nantes,nantes,1.0,True
+Lille OSC,lille osc,Lille,lille,0.9333,True
+OGC Nice,ogc nice,Nice,nice,0.925,True
+Olympique Lyonnais,olympique lyonnais,Lyon,lyon,0.8833,True
+Olympique de Marseille,olympique marseille,Marseille,marseille,0.9211,True
+Paris Saint-Germain FC,paris saint germain,Paris FC,paris,0.8895,True
+Racing Club de Lens,racing lens,Lens,lens,0.9045,True
+Stade Rennais FC 1901,stade rennais 1901,,,0.0,False

@@ -1,0 +1,11 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+1. FC Heidenheim 1846,1 heidenheim 1846,Heidenheim,heidenheim,0.9382,True
+1. FC Köln,1 köln,,,0.0,False
+1. FSV Mainz 05,1 fsv mainz 05,Mainz,mainz,0.9036,True
+Bayer 04 Leverkusen,bayer 04 leverkusen,Leverkusen,leverkusen,0.9289,True
+Borussia Dortmund,borussia dortmund,Dortmund,dortmund,0.9206,True
+FC Augsburg,augsburg,Augsburg,augsburg,1.0,True
+Hamburger SV,hamburger sv,Hamburg,hamburg,0.9375,True
+RB Leipzig,rb leipzig,RB Leipzig,rb leipzig,1.0,True
+VfB Stuttgart,vfb stuttgart,Stuttgart,stuttgart,0.9538,True
+VfL Wolfsburg,vfl wolfsburg,Wolfsburg,wolfsburg,0.9538,True

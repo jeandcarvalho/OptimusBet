@@ -1,0 +1,9 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+1. FC Köln,1 köln,,,0.0,False
+Bayer 04 Leverkusen,bayer 04 leverkusen,Leverkusen,leverkusen,0.9289,True
+Borussia Mönchengladbach,borussia mönchengladbach,,,0.0,False
+Eintracht Frankfurt,eintracht frankfurt,Ein Frankfurt,ein frankfurt,0.4333,False
+FC Augsburg,augsburg,Augsburg,augsburg,1.0,True
+SC Freiburg,freiburg,Freiburg,freiburg,1.0,True
+VfB Stuttgart,vfb stuttgart,Stuttgart,stuttgart,0.9538,True
+VfL Wolfsburg,vfl wolfsburg,Wolfsburg,wolfsburg,0.9538,True
