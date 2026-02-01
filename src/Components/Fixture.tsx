@@ -1,7 +1,7 @@
 // src/Pages/Fixture.tsx
 import React, { useEffect, useMemo, useState } from "react";
 
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import Footer from "../Components/Footer";
 import { parseCsv, fmtDateBrOnly, fmtNum, tryInt, type Row } from "../lib/rodada";
@@ -562,7 +562,7 @@ function SimilarSection({
 export default function Fixture() {
     
   const { id = "" } = useParams();
-  const navigate = useNavigate();
+
 
   const enrichedFile = useMemo(() => pickByFixtureId(ENRICH_RAW, id), [id]);
   const panelsFile = useMemo(() => pickByFixtureId(PANELS_RAW, id), [id]);
@@ -643,12 +643,6 @@ export default function Fixture() {
         <div className="mx-auto max-w-[1400px] p-3 md:p-4">
           {/* top actions */}
           <div className="flex items-center justify-between gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black hover:bg-white/10"
-            >
-              ← Voltar
-            </button>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
               <Pill cls="border-white/10 bg-zinc-950/40">ID {meta.fixture_id}</Pill>

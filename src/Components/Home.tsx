@@ -593,6 +593,28 @@ const Home: React.FC = () => {
     navigate(`/fixture/${encodeURIComponent(id)}`);
   };
 
+  useEffect(() => {
+  if (!filtersOpen) return;
+
+  const html = document.documentElement;
+  const body = document.body;
+
+  // salva estado atual
+  const prevOverflow = body.style.overflow;
+  const prevPaddingRight = body.style.paddingRight;
+
+  // evita "pular" layout quando some scrollbar (desktop/tablet)
+  const scrollbarW = window.innerWidth - html.clientWidth;
+  body.style.overflow = "hidden";
+  if (scrollbarW > 0) body.style.paddingRight = `${scrollbarW}px`;
+
+  return () => {
+    body.style.overflow = prevOverflow;
+    body.style.paddingRight = prevPaddingRight;
+  };
+}, [filtersOpen]);
+
+
   const anySelection = useMemo(() => {
     const lOn = Object.values(leagueOn).some(Boolean);
     const gOn = Object.values(visible).some(Boolean);
@@ -637,77 +659,99 @@ const Home: React.FC = () => {
             />
           </div>
 
-          {/* Mobile drawer */}
-          {filtersOpen && (
-            <div className="fixed inset-0 z-40 md:hidden">
-              <div className="absolute inset-0 bg-black/60" onClick={() => setFiltersOpen(false)} />
-              <div className="absolute right-0 top-0 h-full w-[88%] max-w-[420px] border-l border-white/10 bg-zinc-950 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-black">Filtros</div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={clearFilters}
-                      disabled={!anySelection}
-                      className={[
-                        "rounded-xl border px-3 py-2 text-xs font-black",
-                        anySelection ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-white/5 bg-white/5 opacity-40 cursor-not-allowed",
-                      ].join(" ")}
-                    >
-                      Clear ✖
-                    </button>
-                    <button
-                      onClick={() => setFiltersOpen(false)}
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold"
-                    >
-                      Fechar
-                    </button>
-                  </div>
-                </div>
+         {/* Mobile drawer */}
+{filtersOpen && (
+  <div className="fixed inset-0 z-40 md:hidden">
+    <div className="absolute inset-0 bg-black/60" onClick={() => setFiltersOpen(false)} />
 
-                <div className="mt-4">
-                  <div className="text-xs font-bold uppercase tracking-wide opacity-80">Campeonatos</div>
-                  <div className="mt-3 flex flex-col gap-2">
-                    {leagueKeys.map((k) => (
-                      <button
-                        key={k}
-                        onClick={() => toggleLeague(k)}
-                        className={[
-                          "flex items-center justify-between rounded-xl border px-3 py-2 text-sm",
-                          leagueOn[k] ?? false ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
-                        ].join(" ")}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(k)].join(" ")} />
-                          <span className="font-bold">{leagueLabel(k)}</span>
-                        </div>
-                        <span className="text-xs font-black">{leagueOn[k] ?? false ? "ON" : "OFF"}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+    <div className="absolute right-0 top-0 h-full w-[88%] max-w-[420px] border-l border-white/10 bg-zinc-950 p-4">
+      {/* ✅ estrutura em coluna pra ter área rolável real */}
+      <div className="flex h-full flex-col">
+        {/* header fixo */}
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-black">Filtros</div>
+          <div className="flex gap-2">
+            <button
+              onClick={clearFilters}
+              disabled={!anySelection}
+              className={[
+                "rounded-xl border px-3 py-2 text-xs font-black",
+                anySelection
+                  ? "border-white/10 bg-white/5 hover:bg-white/10"
+                  : "border-white/5 bg-white/5 opacity-40 cursor-not-allowed",
+              ].join(" ")}
+            >
+              Clear ✖
+            </button>
 
-                <div className="mt-5 text-xs font-bold uppercase tracking-wide opacity-80">Jogos</div>
-                <div className="mt-3 flex flex-col gap-2 max-h-[60vh] overflow-auto pr-1">
-                  {filtered.map((fx) => {
-                    const title = `${fx.display_home} × ${fx.display_away}`.trim();
-                    return (
-                      <label key={fx.baseKey} className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs">
-                        <input
-                          type="checkbox"
-                          checked={visible[fx.baseKey] ?? false}
-                          onChange={(e) => toggleGame(fx.baseKey, e.target.checked)}
-                          className="scale-110"
-                        />
-                        <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(fx.league)].join(" ")} />
-                        <span className="opacity-90">{title}</span>
-                      </label>
-                    );
-                  })}
-                  {!filtered.length && <div className="text-xs opacity-70">Nenhum jogo encontrado (ative ligas primeiro).</div>}
-                </div>
-              </div>
+            <button
+              onClick={() => setFiltersOpen(false)}
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+
+        {/* ✅ tudo que deve rolar fica aqui */}
+        <div className="mt-4 flex-1 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+          {/* Campeonatos */}
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wide opacity-80">Campeonatos</div>
+            <div className="mt-3 flex flex-col gap-2">
+              {leagueKeys.map((k) => (
+                <button
+                  key={k}
+                  onClick={() => toggleLeague(k)}
+                  className={[
+                    "flex items-center justify-between rounded-xl border px-3 py-2 text-sm",
+                    leagueOn[k] ?? false ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
+                  ].join(" ")}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(k)].join(" ")} />
+                    <span className="font-bold">{leagueLabel(k)}</span>
+                  </div>
+                  <span className="text-xs font-black">{leagueOn[k] ?? false ? "ON" : "OFF"}</span>
+                </button>
+              ))}
             </div>
-          )}
+          </div>
+
+          {/* Jogos */}
+          <div className="mt-5">
+            <div className="text-xs font-bold uppercase tracking-wide opacity-80">Jogos</div>
+
+            <div className="mt-3 flex flex-col gap-2">
+              {filtered.map((fx) => {
+                const title = `${fx.display_home} × ${fx.display_away}`.trim();
+                return (
+                  <label
+                    key={fx.baseKey}
+                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={visible[fx.baseKey] ?? false}
+                      onChange={(e) => toggleGame(fx.baseKey, e.target.checked)}
+                      className="scale-110"
+                    />
+                    <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(fx.league)].join(" ")} />
+                    <span className="opacity-90">{title}</span>
+                  </label>
+                );
+              })}
+
+              {!filtered.length && (
+                <div className="text-xs opacity-70">Nenhum jogo encontrado (ative ligas primeiro).</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
           <div className="grid gap-3 md:grid-cols-[380px_1fr] md:gap-4">
             {/* Desktop sidebar */}
