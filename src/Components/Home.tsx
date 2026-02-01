@@ -1,6 +1,6 @@
 // Pages/Home.tsx
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import Footer from "../Components/Footer";
 
@@ -286,10 +286,6 @@ function fmtDateTimeBrPretty(iso: string): string {
   return `${date} • ${time}`;
 }
 
-function stableId(fx: FixtureStats & { baseKey?: string }): string {
-  return fx.meta.fixture_id || `${fx.meta.home_name}-${fx.meta.away_name}-${fx.meta.utcDate_fixture}-${fx.baseKey || ""}`;
-}
-
 // =====================================================
 // ✅ Team name canonicalization
 // =====================================================
@@ -401,10 +397,36 @@ function currentPosFromPanels(panelsRows: Row[] | undefined): { home_pos: number
 }
 
 // =====================================================
+// ✅ URL <-> filtros
+//   q = busca
+//   l = leagues ON (CSV list)
+//   g = games selected (baseKey list)
+// =====================================================
+function parseCsvListParam(v: string | null): string[] {
+  if (!v) return [];
+  return v
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function toCsvListParam(items: string[]): string | null {
+  const xs = (items || []).map((s) => String(s).trim()).filter(Boolean);
+  return xs.length ? xs.join(",") : null;
+}
+
+function emptyBoolMap(keys: string[]): Record<string, boolean> {
+  const m: Record<string, boolean> = {};
+  for (const k of keys) m[k] = false;
+  return m;
+}
+
+// =====================================================
 // Home
 // =====================================================
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [fixtures, setFixtures] = useState<FxUI[]>([]);
   const [visible, setVisible] = useState<Record<string, boolean>>({});
@@ -414,6 +436,9 @@ const Home: React.FC = () => {
 
   const [leagueOn, setLeagueOn] = useState<Record<string, boolean>>({});
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // ✅ evita loop de hydration -> URL sync
+  const hydratedRef = useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -467,22 +492,45 @@ const Home: React.FC = () => {
           );
         });
 
-        const lmap: Record<string, boolean> = {};
+        // ✅ keys disponíveis (pra inicializar maps)
+        const leaguesPresent = Array.from(new Set(out.map((f) => f.league)));
+
+        // ✅ HYDRATE a partir da URL (se houver). Se não houver, inicia TUDO OFF.
+        const qUrl = (searchParams.get("q") || "").trim();
+        const lUrl = parseCsvListParam(searchParams.get("l"));
+        const gUrl = parseCsvListParam(searchParams.get("g"));
+
+        const lmap: Record<string, boolean> = emptyBoolMap(leaguesPresent);
         const vis: Record<string, boolean> = {};
+
+        // 🔸 leagues ON vindos da URL
+        for (const lk of lUrl) lmap[lk] = true;
+
+        // 🔸 games ON vindos da URL (por baseKey)
+        const selectedSet = new Set(gUrl);
         for (const fx of out) {
-          lmap[fx.league] = lmap[fx.league] ?? true;
-          vis[stableId(fx)] = true;
+          vis[fx.baseKey] = selectedSet.has(fx.baseKey);
+        }
+
+        // ✅ se não tem nada na URL: inicia tudo OFF mesmo
+        if (!lUrl.length && !gUrl.length && !qUrl) {
+          for (const lk of leaguesPresent) lmap[lk] = false;
+          for (const fx of out) vis[fx.baseKey] = false;
         }
 
         setFixtures(out);
-        setVisible(vis);
         setLeagueOn(lmap);
+        setVisible(vis);
+        setQ(qUrl);
+
+        hydratedRef.current = true;
       } catch (e: any) {
         setErr(e?.message || "Erro desconhecido");
       } finally {
         setLoading(false);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const leagueKeys = useMemo(() => {
@@ -492,6 +540,7 @@ const Home: React.FC = () => {
     return ks as LeagueKey[];
   }, [fixtures]);
 
+  // ✅ lista de jogos para o drawer/sidebar (respeita league + busca)
   const filtered = useMemo(() => {
     const qq = normTeam(q.trim());
     return fixtures.filter((fx) => {
@@ -502,12 +551,54 @@ const Home: React.FC = () => {
     });
   }, [fixtures, q, leagueOn]);
 
-  const toggleLeague = (k: LeagueKey) => setLeagueOn((m) => ({ ...m, [k]: !(m[k] ?? true) }));
+  // ✅ sincroniza filtros -> URL (depois de hidratado)
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+
+    const leaguesOnNow = leagueKeys.filter((k) => leagueOn[k] === true);
+    const gamesOnNow = fixtures.filter((fx) => visible[fx.baseKey] === true).map((fx) => fx.baseKey);
+
+    const next: Record<string, string> = {};
+
+    const qTrim = q.trim();
+    if (qTrim) next.q = qTrim;
+
+    const l = toCsvListParam(leaguesOnNow);
+    if (l) next.l = l;
+
+    const g = toCsvListParam(gamesOnNow);
+    if (g) next.g = g;
+
+    // ✅ evita re-render extra: só atualiza se mudou
+    const cur = searchParams.toString();
+    const nxt = new URLSearchParams(next).toString();
+    if (cur !== nxt) setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, leagueOn, visible, fixtures, leagueKeys]);
+
+  const toggleLeague = (k: LeagueKey) => setLeagueOn((m) => ({ ...m, [k]: !(m[k] ?? false) }));
+
+  const toggleGame = (baseKey: string, on: boolean) => setVisible((v) => ({ ...v, [baseKey]: on }));
+
+  const clearFilters = () => {
+    // limpa tudo + URL
+    setQ("");
+    setLeagueOn((prev) => emptyBoolMap(Object.keys(prev)));
+    setVisible((prev) => emptyBoolMap(Object.keys(prev)));
+    setSearchParams({}, { replace: true });
+  };
 
   const openFixture = (fx: FxUI) => {
-    const id = (fx?.meta?.fixture_id || stableId(fx)).toString();
+    const id = (fx?.meta?.fixture_id || `${fx.baseKey}`).toString();
     navigate(`/fixture/${encodeURIComponent(id)}`);
   };
+
+  const anySelection = useMemo(() => {
+    const lOn = Object.values(leagueOn).some(Boolean);
+    const gOn = Object.values(visible).some(Boolean);
+    const hasQ = !!q.trim();
+    return lOn || gOn || hasQ;
+  }, [leagueOn, visible, q]);
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-900 text-zinc-100">
@@ -523,6 +614,17 @@ const Home: React.FC = () => {
                   className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold"
                 >
                   Filtros
+                </button>
+
+                <button
+                  onClick={clearFilters}
+                  disabled={!anySelection}
+                  className={[
+                    "rounded-xl border px-3 py-2 text-xs font-black",
+                    anySelection ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-white/5 bg-white/5 opacity-40 cursor-not-allowed",
+                  ].join(" ")}
+                >
+                  Clear ✖
                 </button>
               </div>
             </div>
@@ -542,12 +644,24 @@ const Home: React.FC = () => {
               <div className="absolute right-0 top-0 h-full w-[88%] max-w-[420px] border-l border-white/10 bg-zinc-950 p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-black">Filtros</div>
-                  <button
-                    onClick={() => setFiltersOpen(false)}
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold"
-                  >
-                    Fechar
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={clearFilters}
+                      disabled={!anySelection}
+                      className={[
+                        "rounded-xl border px-3 py-2 text-xs font-black",
+                        anySelection ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-white/5 bg-white/5 opacity-40 cursor-not-allowed",
+                      ].join(" ")}
+                    >
+                      Clear ✖
+                    </button>
+                    <button
+                      onClick={() => setFiltersOpen(false)}
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold"
+                    >
+                      Fechar
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-4">
@@ -559,14 +673,14 @@ const Home: React.FC = () => {
                         onClick={() => toggleLeague(k)}
                         className={[
                           "flex items-center justify-between rounded-xl border px-3 py-2 text-sm",
-                          leagueOn[k] ?? true ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
+                          leagueOn[k] ?? false ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
                         ].join(" ")}
                       >
                         <div className="flex items-center gap-2">
                           <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(k)].join(" ")} />
                           <span className="font-bold">{leagueLabel(k)}</span>
                         </div>
-                        <span className="text-xs font-black">{leagueOn[k] ?? true ? "ON" : "OFF"}</span>
+                        <span className="text-xs font-black">{leagueOn[k] ?? false ? "ON" : "OFF"}</span>
                       </button>
                     ))}
                   </div>
@@ -575,15 +689,13 @@ const Home: React.FC = () => {
                 <div className="mt-5 text-xs font-bold uppercase tracking-wide opacity-80">Jogos</div>
                 <div className="mt-3 flex flex-col gap-2 max-h-[60vh] overflow-auto pr-1">
                   {filtered.map((fx) => {
-                    const id = stableId(fx);
                     const title = `${fx.display_home} × ${fx.display_away}`.trim();
-
                     return (
-                      <label key={id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs">
+                      <label key={fx.baseKey} className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs">
                         <input
                           type="checkbox"
-                          checked={visible[id] ?? true}
-                          onChange={(e) => setVisible((v) => ({ ...v, [id]: e.target.checked }))}
+                          checked={visible[fx.baseKey] ?? false}
+                          onChange={(e) => toggleGame(fx.baseKey, e.target.checked)}
                           className="scale-110"
                         />
                         <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(fx.league)].join(" ")} />
@@ -591,6 +703,7 @@ const Home: React.FC = () => {
                       </label>
                     );
                   })}
+                  {!filtered.length && <div className="text-xs opacity-70">Nenhum jogo encontrado (ative ligas primeiro).</div>}
                 </div>
               </div>
             </div>
@@ -599,7 +712,19 @@ const Home: React.FC = () => {
           <div className="grid gap-3 md:grid-cols-[380px_1fr] md:gap-4">
             {/* Desktop sidebar */}
             <aside className="hidden md:sticky md:top-4 md:block md:h-[calc(100vh-2rem)] md:overflow-auto rounded-2xl border border-white/10 bg-gradient-to-b from-white/10 to-black/20 p-4 shadow-2xl">
-              <div className="text-sm font-black">Painel da Rodada 🎯</div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-sm font-black">Painel da Rodada 🎯</div>
+                <button
+                  onClick={clearFilters}
+                  disabled={!anySelection}
+                  className={[
+                    "rounded-xl border px-3 py-2 text-xs font-black",
+                    anySelection ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-white/5 bg-white/5 opacity-40 cursor-not-allowed",
+                  ].join(" ")}
+                >
+                  Clear ✖
+                </button>
+              </div>
 
               <input
                 value={q}
@@ -617,14 +742,14 @@ const Home: React.FC = () => {
                       onClick={() => toggleLeague(k)}
                       className={[
                         "flex items-center justify-between rounded-xl border px-3 py-2 text-sm",
-                        leagueOn[k] ?? true ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
+                        leagueOn[k] ?? false ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
                       ].join(" ")}
                     >
                       <div className="flex items-center gap-2">
                         <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(k)].join(" ")} />
                         <span className="font-bold">{leagueLabel(k)}</span>
                       </div>
-                      <span className="text-xs font-black">{leagueOn[k] ?? true ? "ON" : "OFF"}</span>
+                      <span className="text-xs font-black">{leagueOn[k] ?? false ? "ON" : "OFF"}</span>
                     </button>
                   ))}
                 </div>
@@ -632,14 +757,13 @@ const Home: React.FC = () => {
 
               <div className="mt-4 flex flex-col gap-2">
                 {filtered.map((fx) => {
-                  const id = stableId(fx);
                   const title = `${fx.display_home} × ${fx.display_away}`.trim();
                   return (
-                    <label key={id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs">
+                    <label key={fx.baseKey} className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs">
                       <input
                         type="checkbox"
-                        checked={visible[id] ?? true}
-                        onChange={(e) => setVisible((v) => ({ ...v, [id]: e.target.checked }))}
+                        checked={visible[fx.baseKey] ?? false}
+                        onChange={(e) => toggleGame(fx.baseKey, e.target.checked)}
                         className="scale-110"
                       />
                       <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(fx.league)].join(" ")} />
@@ -647,7 +771,7 @@ const Home: React.FC = () => {
                     </label>
                   );
                 })}
-                {!filtered.length && <div className="text-xs opacity-70">Nenhum jogo encontrado.</div>}
+                {!filtered.length && <div className="text-xs opacity-70">Nenhum jogo encontrado (ative ligas primeiro).</div>}
               </div>
             </aside>
 
@@ -661,16 +785,15 @@ const Home: React.FC = () => {
               )}
 
               {fixtures.map((fx, idx) => {
-                if ((leagueOn[fx.league] ?? true) === false) return null;
+                // ✅ agora: liga precisa estar ON E o jogo precisa estar selecionado
+                if ((leagueOn[fx.league] ?? false) === false) return null;
+                if (!(visible[fx.baseKey] ?? false)) return null;
 
                 const qq = normTeam(q.trim());
                 if (qq) {
                   const t = normTeam(`${fx.display_home} ${fx.display_away} ${fx.meta.competition} ${fx.league}`);
                   if (!t.includes(qq)) return null;
                 }
-
-                const id = stableId(fx);
-                if (!(visible[id] ?? true)) return null;
 
                 const homeName = fx.display_home;
                 const awayName = fx.display_away;
@@ -703,7 +826,7 @@ const Home: React.FC = () => {
 
                 return (
                   <div
-                    key={`${id}-${idx}`}
+                    key={`${fx.baseKey}-${idx}`}
                     className="rounded-2xl border border-white/10 bg-[radial-gradient(1200px_240px_at_12%_0%,rgba(47,125,255,0.10),transparent_60%),radial-gradient(900px_220px_at_88%_0%,rgba(255,59,59,0.08),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.30))] p-3 sm:p-4 shadow-2xl"
                   >
                     {/* header */}
@@ -720,7 +843,9 @@ const Home: React.FC = () => {
                           {homeName} × {awayName}
                         </div>
 
-                        <div className="mt-1 text-xs opacity-75">MD {fx.meta.matchday_fixture} • {dtPretty}</div>
+                        <div className="mt-1 text-xs opacity-75">
+                          MD {fx.meta.matchday_fixture} • {dtPretty}
+                        </div>
                       </div>
 
                       <div className="flex flex-wrap gap-2 sm:justify-end">
@@ -752,14 +877,15 @@ const Home: React.FC = () => {
                               confiabCls === "conf-medio" && "border-yellow-300/30 bg-yellow-300/15",
                               confiabCls === "conf-ruim" && "border-red-400/30 bg-red-400/15",
                               confiabCls === "conf-na" && "border-white/10 bg-white/5 opacity-80",
-                            ].filter(Boolean).join(" ")}
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
                           >
                             {confiabLabel}
                           </span>
                         </div>
                       </div>
 
-                      {/* ✅ MOBILE-FIRST: nomes em cima (wrap), score central */}
                       <div className="mt-3">
                         {/* Names row */}
                         <div className="grid grid-cols-2 gap-3 items-start">
@@ -805,7 +931,6 @@ const Home: React.FC = () => {
                       <div className="text-[11px] font-bold uppercase tracking-wide opacity-85">Média Simples</div>
 
                       <div className="mt-3 grid gap-3 md:grid-cols-1">
-
                         <StatBox title="Média Simples" gf={fmtNum(casa_gf_m, 2)} ga={fmtNum(casa_ga_m, 2)} />
                       </div>
                     </div>
@@ -997,12 +1122,9 @@ function PosBadge({ pos, small }: { pos: number; small?: boolean }) {
   );
 }
 
-function StatBox({  gf, ga }: { title: string; gf: string; ga: string }) {
+function StatBox({ gf, ga }: { title: string; gf: string; ga: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-    
-
-      {/* ✅ centralizado no mobile e no desktop */}
       <div className="mt-3 flex flex-col items-center justify-center gap-2 border-b border-white/10 pb-3">
         <div className="flex items-baseline gap-2 font-black tabular-nums justify-center">
           <span className="text-blue-400">{gf}</span>
@@ -1015,7 +1137,6 @@ function StatBox({  gf, ga }: { title: string; gf: string; ga: string }) {
           <span className="text-red-400 font-bold">Gols Visitante</span>
         </div>
       </div>
-
     </div>
   );
 }

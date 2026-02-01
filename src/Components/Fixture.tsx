@@ -1,5 +1,6 @@
 // src/Pages/Fixture.tsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
 
 import Footer from "../Components/Footer";
@@ -559,6 +560,7 @@ function SimilarSection({
 // Page
 // ----------------------------------------------------
 export default function Fixture() {
+    
   const { id = "" } = useParams();
   const navigate = useNavigate();
 
@@ -620,6 +622,11 @@ export default function Fixture() {
       shotsOn: { s: meanSimple(sotf), w: meanWeighted(sotf, w), conf: confidenceFromCv(cvPercent(sotf, w)) },
     };
   }
+
+  useEffect(() => {
+  // volta pro topo ao abrir a página / trocar o ID
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+}, [id]);
 
   const homeStats = useMemo(() => buildStats(picksHomeValid), [picksHomeValid]);
   const awayStats = useMemo(() => buildStats(picksAwayValid), [picksAwayValid]);
@@ -753,7 +760,7 @@ export default function Fixture() {
                     Perfil do Mandante 🔵 <span className="text-blue-100 font-black">— {homeTitle}</span>
                   </span>
                 }
-                subtitle={`linhas válidas: ${homeStats.nRows} • ponderação: peso = 1/rank`}
+                subtitle={""}
               >
                 <div className="grid gap-3">
                   <MetricGroup title="Ataque (a favor)">
@@ -781,7 +788,7 @@ export default function Fixture() {
                     Perfil do Visitante 🔴 <span className="text-red-100 font-black">— {awayTitle}</span>
                   </span>
                 }
-                subtitle={`linhas válidas: ${awayStats.nRows} • ponderação: peso = 1/rank`}
+                subtitle={""}
               >
                 <div className="grid gap-3">
                   <MetricGroup title="Ataque (a favor)">
