@@ -1,0 +1,8 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+CD Nacional,cd nacional,Nacional,nacional,0.9591,True
+CF Estrela da Amadora,estrela amadora,Estrela,estrela,0.92,True
+FC Alverca,alverca,Alverca,alverca,1.0,True
+FC Porto,porto,Porto,porto,1.0,True
+Gil Vicente FC,gil vicente,Gil Vicente,gil vicente,1.0,True
+Rio Ave FC,rio ave,Rio Ave,rio ave,1.0,True
+Sporting Clube de Portugal,sporting portugal,,,0.0,False

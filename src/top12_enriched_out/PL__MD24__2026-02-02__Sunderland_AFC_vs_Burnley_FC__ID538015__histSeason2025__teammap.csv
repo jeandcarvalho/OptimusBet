@@ -1,0 +1,11 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+AFC Bournemouth,bournemouth,Bournemouth,bournemouth,1.0,True
+Aston Villa FC,aston villa,Aston Villa,aston villa,1.0,True
+Brentford FC,brentford,Brentford,brentford,1.0,True
+Brighton & Hove Albion FC,brighton and hove albion,Brighton,brighton,0.9,True
+Burnley FC,burnley,Burnley,burnley,1.0,True
+Leeds United FC,leeds united,Leeds,leeds,0.9125,True
+Manchester City FC,manchester city,Man City,man city,0.4333,False
+Newcastle United FC,newcastle united,Newcastle,newcastle,0.9344,True
+Sunderland AFC,sunderland,Sunderland,sunderland,1.0,True
+Wolverhampton Wanderers FC,wolverhampton wanderers,,,0.0,False

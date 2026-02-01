@@ -1,0 +1,10 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+AC Milan,milan,Milan,milan,1.0,True
+Bologna FC 1909,bologna 1909,Bologna,bologna,0.9375,True
+Cagliari Calcio,cagliari calcio,Cagliari,cagliari,0.93,True
+Como 1907,como 1907,Como,como,0.9167,True
+Genoa CFC,genoa,Genoa,genoa,1.0,True
+Hellas Verona FC,hellas verona,Verona,verona,0.9192,True
+Juventus FC,juventus,Juventus,juventus,1.0,True
+Parma Calcio 1913,parma calcio 1913,Parma,parma,0.8941,True
+SS Lazio,ss lazio,Lazio,lazio,0.9437,True

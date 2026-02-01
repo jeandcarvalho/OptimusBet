@@ -1,0 +1,9 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+AVS,avs,AVS,avs,1.0,True
+CD Tondela,cd tondela,Tondela,tondela,0.955,True
+FC Alverca,alverca,Alverca,alverca,1.0,True
+FC Famalicão,famalicão,,,0.0,False
+FC Porto,porto,Porto,porto,1.0,True
+Sport Lisboa e Benfica,sport lisboa e benfica,Benfica,benfica,0.8977,True
+Sporting Clube de Braga,sporting braga,Sp Braga,sp braga,0.4333,False
+Sporting Clube de Portugal,sporting portugal,,,0.0,False

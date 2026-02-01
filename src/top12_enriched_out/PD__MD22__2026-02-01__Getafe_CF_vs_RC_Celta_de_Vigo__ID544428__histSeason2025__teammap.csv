@@ -1,0 +1,10 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
+Club Atlético de Madrid,atlético madrid,Ath Madrid,ath madrid,0.4333,False
+Deportivo Alavés,deportivo alavés,,,0.0,False
+Elche CF,elche,Elche,elche,1.0,True
+Getafe CF,getafe,Getafe,getafe,1.0,True
+Levante UD,levante ud,Levante,levante,0.955,True
+RC Celta de Vigo,rc celta vigo,Celta,celta,0.9077,True
+RCD Espanyol de Barcelona,rcd espanyol barcelona,Barcelona,barcelona,0.9114,True
+RCD Mallorca,rcd mallorca,Mallorca,mallorca,0.95,True
+Real Oviedo,real oviedo,Oviedo,oviedo,0.9318,True
