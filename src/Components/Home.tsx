@@ -1,7 +1,7 @@
 // Pages/Home.tsx
 import React, { useEffect, useMemo, useState } from "react";
+
 import Footer from "../Components/Footer";
-import { loadHomeCounter } from "../Hooks/CreateCount";
 
 import {
   buildFixtureStats,
@@ -243,10 +243,9 @@ function stripFixturePrefix(teamOrLabel: string): string {
   // "MD22 2026-02-01 Real Madrid CF"
   // "MD 22 2026-02-01 Real Madrid CF"
   // "MD22 - 2026-02-01 - Real Madrid CF"
-  s = s.replace(
-    /^MD\s*\d+\s*[-–—•|]?\s*\d{4}-\d{2}-\d{2}\s*[-–—•|]?\s*/i,
-    ""
-  ).trim();
+  s = s
+    .replace(/^MD\s*\d+\s*[-–—•|]?\s*\d{4}-\d{2}-\d{2}\s*[-–—•|]?\s*/i, "")
+    .trim();
 
   // fallback extra: se tiver data no começo + texto, remove a data inicial
   // "2026-02-01 Real Madrid CF"
@@ -254,7 +253,6 @@ function stripFixturePrefix(teamOrLabel: string): string {
 
   return s;
 }
-
 
 // =====================================================
 // “limpeza” do título (quando o fallback usa baseKey)
@@ -267,14 +265,8 @@ function looksDirtyTeamName(s: string): boolean {
   if (/^MD\s*\d+/i.test(t)) return true;
   if (/\d{4}-\d{2}-\d{2}/.test(t)) return true;
 
-  return (
-    /histSeason/i.test(t) ||
-    /ID\d+/i.test(t) ||
-    t.includes("__") ||
-    t.includes("_vs_")
-  );
+  return /histSeason/i.test(t) || /ID\d+/i.test(t) || t.includes("__") || t.includes("_vs_");
 }
-
 
 function titleFromBaseKey(baseKey: string): { home: string; away: string } | null {
   const m = baseKey.match(/__([^_].*?)_vs_(.*?)__/);
@@ -310,10 +302,7 @@ function fmtDateTimeBrPretty(iso: string): string {
 }
 
 function stableId(fx: FixtureStats & { baseKey?: string }): string {
-  return (
-    fx.meta.fixture_id ||
-    `${fx.meta.home_name}-${fx.meta.away_name}-${fx.meta.utcDate_fixture}-${fx.baseKey || ""}`
-  );
+  return fx.meta.fixture_id || `${fx.meta.home_name}-${fx.meta.away_name}-${fx.meta.utcDate_fixture}-${fx.baseKey || ""}`;
 }
 
 // =====================================================
@@ -415,11 +404,9 @@ function resolveCanonicalNames(fx: FixtureStats & { baseKey: string }): { home: 
   const metaAwayClean = stripFixturePrefix(fx.meta.away_name || "");
 
   // 2) escolhe seed: se ainda estiver sujo, vai pro fallback do baseKey
-  const seedHome =
-    !looksDirtyTeamName(metaHomeClean) ? metaHomeClean : (fallback?.home || metaHomeClean || fx.meta.home_name);
+  const seedHome = !looksDirtyTeamName(metaHomeClean) ? metaHomeClean : fallback?.home || metaHomeClean || fx.meta.home_name;
 
-  const seedAway =
-    !looksDirtyTeamName(metaAwayClean) ? metaAwayClean : (fallback?.away || metaAwayClean || fx.meta.away_name);
+  const seedAway = !looksDirtyTeamName(metaAwayClean) ? metaAwayClean : fallback?.away || metaAwayClean || fx.meta.away_name;
 
   // 3) “embelezamento”/canonicalização via top_rows (acentos etc.)
   const home = pickDisplayName(seedHome, fx.top_rows);
@@ -428,17 +415,25 @@ function resolveCanonicalNames(fx: FixtureStats & { baseKey: string }): { home: 
   return { home, away };
 }
 
+// =====================================================
+// ✅ POSIÇÃO ATUAL (panels.csv)
+// =====================================================
+function currentPosFromPanels(panelsRows: Row[] | undefined): { home_pos: number | null; away_pos: number | null } {
+  if (!panelsRows?.length) return { home_pos: null, away_pos: null };
+
+  const homeRow = panelsRows.find((r) => String(r["side"] || "").toUpperCase() === "HOME");
+  const awayRow = panelsRows.find((r) => String(r["side"] || "").toUpperCase() === "AWAY");
+
+  const home_pos = homeRow ? tryInt(String(homeRow["pos"] ?? "")) : null;
+  const away_pos = awayRow ? tryInt(String(awayRow["pos"] ?? "")) : null;
+
+  return { home_pos, away_pos };
+}
 
 // =====================================================
 // Home
 // =====================================================
 const Home: React.FC = () => {
-  useEffect(() => {
-    (async () => {
-      await loadHomeCounter();
-    })();
-  }, []);
-
   const [fixtures, setFixtures] = useState<FxUI[]>([]);
   const [visible, setVisible] = useState<Record<string, boolean>>({});
   const [q, setQ] = useState("");
@@ -474,8 +469,13 @@ const Home: React.FC = () => {
 
           // ✅ resolve nomes canônicos e posições ainda no load (não no render)
           const canon = resolveCanonicalNames(fx);
-          const home_pos = estimatePosRobust(fx.top_rows, canon.home);
-          const away_pos = estimatePosRobust(fx.top_rows, canon.away);
+
+          // ✅ 1) posição atual vem do panels.csv
+          const { home_pos: homePosNow, away_pos: awayPosNow } = currentPosFromPanels(panelsRows);
+
+          // ✅ 2) fallback: se não existir panels, usa TOP (histórico)
+          const home_pos = homePosNow ?? estimatePosRobust(fx.top_rows, canon.home);
+          const away_pos = awayPosNow ?? estimatePosRobust(fx.top_rows, canon.away);
 
           out.push({
             ...(fx as FixtureStats),
@@ -540,18 +540,12 @@ const Home: React.FC = () => {
     });
   }, [fixtures, q, leagueOn]);
 
-  const showAll = (on: boolean) => {
-    const next: Record<string, boolean> = { ...visible };
-    for (const fx of fixtures) next[stableId(fx)] = on;
-    setVisible(next);
-  };
+
 
   const toggleLeague = (k: LeagueKey) => setLeagueOn((m) => ({ ...m, [k]: !(m[k] ?? true) }));
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-900 text-zinc-100">
- 
-
       <main className="flex-1">
         <div className="mx-auto max-w-[1700px] p-3 md:p-4">
           {/* Mobile top bar */}
@@ -565,18 +559,7 @@ const Home: React.FC = () => {
                 >
                   Filtros
                 </button>
-                <button
-                  onClick={() => showAll(true)}
-                  className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs font-semibold"
-                >
-                  Mostrar
-                </button>
-                <button
-                  onClick={() => showAll(false)}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold"
-                >
-                  Ocultar
-                </button>
+        
               </div>
             </div>
 
@@ -612,14 +595,14 @@ const Home: React.FC = () => {
                         onClick={() => toggleLeague(k)}
                         className={[
                           "flex items-center justify-between rounded-xl border px-3 py-2 text-sm",
-                          (leagueOn[k] ?? true) ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
+                          leagueOn[k] ?? true ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
                         ].join(" ")}
                       >
                         <div className="flex items-center gap-2">
                           <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(k)].join(" ")} />
                           <span className="font-bold">{leagueLabel(k)}</span>
                         </div>
-                        <span className="text-xs font-black">{(leagueOn[k] ?? true) ? "ON" : "OFF"}</span>
+                        <span className="text-xs font-black">{leagueOn[k] ?? true ? "ON" : "OFF"}</span>
                       </button>
                     ))}
                   </div>
@@ -664,8 +647,6 @@ const Home: React.FC = () => {
                 className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none"
               />
 
-      
-
               <div className="mt-4">
                 <div className="text-xs font-bold uppercase tracking-wide opacity-80">Campeonatos</div>
                 <div className="mt-3 grid grid-cols-1 gap-2">
@@ -675,14 +656,14 @@ const Home: React.FC = () => {
                       onClick={() => toggleLeague(k)}
                       className={[
                         "flex items-center justify-between rounded-xl border px-3 py-2 text-sm",
-                        (leagueOn[k] ?? true) ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
+                        leagueOn[k] ?? true ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
                       ].join(" ")}
                     >
                       <div className="flex items-center gap-2">
                         <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(k)].join(" ")} />
                         <span className="font-bold">{leagueLabel(k)}</span>
                       </div>
-                      <span className="text-xs font-black">{(leagueOn[k] ?? true) ? "ON" : "OFF"}</span>
+                      <span className="text-xs font-black">{leagueOn[k] ?? true ? "ON" : "OFF"}</span>
                     </button>
                   ))}
                 </div>
@@ -714,11 +695,7 @@ const Home: React.FC = () => {
 
             {/* Content */}
             <section className="flex flex-col gap-3 md:gap-4">
-              {loading && (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm opacity-90">
-                  Carregando CSVs…
-                </div>
-              )}
+              {loading && <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm opacity-90">Carregando CSVs…</div>}
               {err && (
                 <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm">
                   Erro: {err}
@@ -763,21 +740,26 @@ const Home: React.FC = () => {
                 const pred_vis = vis_gf_w != null && casa_ga_w != null ? (vis_gf_w + casa_ga_w) / 2 : null;
                 const total_prev = pred_mand != null && pred_vis != null ? pred_mand + pred_vis : null;
 
-                // ✅ posições robustas calculadas no load
+                // ✅ posições atuais já calculadas no load (panels.csv)
                 const home_pos = fx.home_pos;
                 const away_pos = fx.away_pos;
 
                 return (
                   <div
                     key={`${id}-${idx}`}
-                    className="rounded-2xl border border-white/10 bg-[radial-gradient(1200px_240px_at_12%_0%,rgba(47,125,255,0.10),transparent_60%),radial-gradient(900px_220px_at_88%_0%,rgba(255,59,59,0.08),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.30))] p-4 shadow-2xl"
+                    className="rounded-2xl border border-white/10 bg-[radial-gradient(1200px_240px_at_12%_0%,rgba(47,125,255,0.10),transparent_60%),radial-gradient(900px_220px_at_88%_0%,rgba(255,59,59,0.08),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.30))] p-3 sm:p-4 shadow-2xl"
                   >
                     {/* header (mobile-first) */}
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(fx.league)].join(" ")} />
-                          <span className={["rounded-full border px-2.5 py-1 text-[11px] font-black", leaguePillClass(fx.league)].join(" ")}>
+                          <span
+                            className={[
+                              "rounded-full border px-2.5 py-1 text-[11px] font-black",
+                              leaguePillClass(fx.league),
+                            ].join(" ")}
+                          >
                             {leagueLabel(fx.league)}
                           </span>
                         </div>
@@ -791,13 +773,13 @@ const Home: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="self-start rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs">
+                      <div className="self-start rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[11px] sm:text-xs">
                         Amostras do TOP: <b>{n}</b>
                       </div>
                     </div>
 
                     {/* master */}
-                    <div className="mt-3 rounded-2xl border border-white/10 bg-gradient-to-b from-white/10 to-black/20 p-4">
+                    <div className="mt-3 rounded-2xl border border-white/10 bg-gradient-to-b from-white/10 to-black/20 p-3 sm:p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="text-[11px] font-bold uppercase tracking-wide opacity-85">Placar Previsto ✨</div>
 
@@ -819,21 +801,42 @@ const Home: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-center">
-                        <TeamPill name={homeName} pos={home_pos} />
-                        <div className="text-2xl sm:text-3xl font-black tabular-nums">{fmtNum(pred_mand, 2)}</div>
-                        <div className="text-lg font-black opacity-85">×</div>
-                        <div className="text-2xl sm:text-3xl font-black tabular-nums">{fmtNum(pred_vis, 2)}</div>
-                        <TeamPill name={awayName} pos={away_pos} />
-                      </div>
+                      {/* ✅ SCOREBOARD MOBILE-FIRST (casa esquerda / fora direita) */}
+                      <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                        {/* HOME */}
+                        <div className="min-w-0 text-left">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="truncate text-xs sm:text-sm font-bold opacity-95">{homeName}</span>
+                            {home_pos != null && <PosBadge pos={home_pos} />}
+                          </div>
+                          <div className="text-[11px] opacity-70">Casa</div>
+                        </div>
 
-                      <div className="mt-3 text-center text-xs opacity-85">
-                        Total de gols previsto: <b>{fmtNum(total_prev, 2)}</b>
+                        {/* SCORE */}
+                        <div className="px-2 text-center">
+                          <div className="flex items-baseline justify-center gap-2 tabular-nums">
+                            <span className="text-2xl sm:text-3xl font-black">{fmtNum(pred_mand, 2)}</span>
+                            <span className="text-base sm:text-lg font-black opacity-80">×</span>
+                            <span className="text-2xl sm:text-3xl font-black">{fmtNum(pred_vis, 2)}</span>
+                          </div>
+                          <div className="mt-1 text-[11px] opacity-70">
+                            Total: <b>{fmtNum(total_prev, 2)}</b>
+                          </div>
+                        </div>
+
+                        {/* AWAY */}
+                        <div className="min-w-0 text-right">
+                          <div className="flex items-center justify-end gap-2 min-w-0">
+                            {away_pos != null && <PosBadge pos={away_pos} />}
+                            <span className="truncate text-xs sm:text-sm font-bold opacity-95">{awayName}</span>
+                          </div>
+                          <div className="text-[11px] opacity-70">Fora</div>
+                        </div>
                       </div>
                     </div>
 
                     {/* médias */}
-                    <div className="mt-3 rounded-2xl border border-white/10 border-dashed bg-black/25 p-4">
+                    <div className="mt-3 rounded-2xl border border-white/10 border-dashed bg-black/25 p-3 sm:p-4">
                       <div className="text-[11px] font-bold uppercase tracking-wide opacity-85">Comparativo de médias</div>
 
                       <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -949,7 +952,7 @@ function PosBadge({ pos, small }: { pos: number; small?: boolean }) {
     <span
       className={[
         "inline-flex items-center rounded-full border border-white/10 bg-white/5 font-black shadow-lg",
-        small ? "px-2 py-[2px] text-[11px] opacity-90" : "px-2.5 py-1 text-xs",
+        small ? "px-2 py-[2px] text-[11px] opacity-90" : "px-2 py-[2px] text-[11px] sm:px-2.5 sm:py-1 sm:text-xs",
       ].join(" ")}
     >
       #{pos}
@@ -957,19 +960,10 @@ function PosBadge({ pos, small }: { pos: number; small?: boolean }) {
   );
 }
 
-function TeamPill({ name, pos }: { name: string; pos: number | null }) {
-  return (
-    <div className="flex items-center gap-2 text-xs opacity-90">
-      <span className="max-w-[38vw] sm:max-w-none truncate">{name}</span>
-      {pos != null && <PosBadge pos={pos} />}
-    </div>
-  );
-}
-
 function StatBox({ title, gf, ga }: { title: string; gf: string; ga: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-      <div className="text-sm font-black opacity-95">{title}</div>
+      <div className="text-sm sm:text-base font-black opacity-95">{title}</div>
       <div className="mt-3 flex items-center justify-between border-b border-white/10 pb-3">
         <div className="text-xs opacity-80"></div>
         <div className="flex items-baseline gap-2 font-black tabular-nums">
