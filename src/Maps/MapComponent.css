@@ -1,0 +1,10 @@
+.custom-map {
+    height: 100px;
+    width: 75%;
+    border-radius: 10px; /* Bordas arredondadas */
+    border: 2px solid hsl(61, 100%, 20%); /* Borda sólida */
+    box-shadow: 0px 0px 10px rgba(63, 59, 4, 0.1); /* Sombra */
+    margin: auto;
+ 
+    
+}
