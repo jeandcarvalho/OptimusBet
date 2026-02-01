@@ -851,84 +851,163 @@ const Home: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* TOP-12 */}
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-sm opacity-90">Ver TOP-12 usado (históricos)</summary>
+{/* TOP-12 */}
+<details className="mt-3">
+  <summary className="cursor-pointer text-sm opacity-90">Ver TOP-12 usado (históricos)</summary>
 
-                      <div className="mt-3 overflow-auto rounded-2xl border border-white/10 bg-black/20">
-                        <table className="min-w-[760px] w-full text-xs">
-                          <thead className="sticky top-0 bg-zinc-950/90 backdrop-blur border-b border-white/10">
-                            <tr>
-                              <th className="p-3 text-right">#</th>
-                              <th className="p-3 whitespace-nowrap">Data</th>
-                              <th className="p-3">Mandante</th>
-                              <th className="p-3">Visitante</th>
-                              <th className="p-3 text-right">Placar</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {fx.top_rows.slice(0, 12).map((r: Record<string, string>, i: number) => {
-                              const dtPrev = fmtDateBrOnly(r["utcDate_prev"] || "");
-                              const homePrev = r["home_prev"] || "";
-                              const awayPrev = r["away_prev"] || "";
-                              const scorePrev = r["score_fulltime_prev"] || "";
+  <div className="mt-3">
+    {/* ✅ MOBILE: cards (zero overflow horizontal) */}
+    <div className="flex flex-col gap-2 md:hidden">
+      {fx.top_rows.slice(0, 12).map((r: Record<string, string>, i: number) => {
+        const dtPrev = fmtDateBrOnly(r["utcDate_prev"] || "");
+        const homePrev = r["home_prev"] || "";
+        const awayPrev = r["away_prev"] || "";
+        const scorePrev = r["score_fulltime_prev"] || "";
 
-                              const target = r["target_team"] || "";
-                              const opp = r["opponent"] || "";
-                              const tp = tryInt(r["target_pos_then"]);
-                              const op = tryInt(r["opponent_pos_then"]);
+        const target = r["target_team"] || "";
+        const opp = r["opponent"] || "";
+        const tp = tryInt(r["target_pos_then"]);
+        const op = tryInt(r["opponent_pos_then"]);
 
-                              let homePosThen: number | null = null;
-                              let awayPosThen: number | null = null;
+        let homePosThen: number | null = null;
+        let awayPosThen: number | null = null;
 
-                              // ✅ robusto também aqui (caso um dia venha sem acento)
-                              const nTarget = normTeam(target);
-                              const nOpp = normTeam(opp);
-                              const nHomePrev = normTeam(homePrev);
-                              const nAwayPrev = normTeam(awayPrev);
+        const nTarget = normTeam(target);
+        const nOpp = normTeam(opp);
+        const nHomePrev = normTeam(homePrev);
+        const nAwayPrev = normTeam(awayPrev);
 
-                              if (nTarget === nHomePrev) {
-                                homePosThen = tp;
-                                awayPosThen = op;
-                              } else if (nTarget === nAwayPrev) {
-                                homePosThen = op;
-                                awayPosThen = tp;
-                              } else {
-                                if (nOpp === nHomePrev) {
-                                  homePosThen = op;
-                                  awayPosThen = tp;
-                                } else if (nOpp === nAwayPrev) {
-                                  homePosThen = tp;
-                                  awayPosThen = op;
-                                }
-                              }
+        if (nTarget === nHomePrev) {
+          homePosThen = tp;
+          awayPosThen = op;
+        } else if (nTarget === nAwayPrev) {
+          homePosThen = op;
+          awayPosThen = tp;
+        } else {
+          if (nOpp === nHomePrev) {
+            homePosThen = op;
+            awayPosThen = tp;
+          } else if (nOpp === nAwayPrev) {
+            homePosThen = tp;
+            awayPosThen = op;
+          }
+        }
 
-                              return (
-                                <tr key={i} className="border-b border-white/5">
-                                  <td className="p-3 text-right tabular-nums opacity-85">{r["rank"] || i + 1}</td>
-                                  <td className="p-3 whitespace-nowrap opacity-85">{dtPrev}</td>
-                                  <td className="p-3">
-                                    {homePrev} {homePosThen != null && <PosBadge small pos={homePosThen} />}
-                                  </td>
-                                  <td className="p-3">
-                                    {awayPrev} {awayPosThen != null && <PosBadge small pos={awayPosThen} />}
-                                  </td>
-                                  <td className="p-3 text-right tabular-nums font-black">{scorePrev}</td>
-                                </tr>
-                              );
-                            })}
+        return (
+          <div key={i} className="rounded-2xl border border-white/10 bg-black/20 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs opacity-80">
+                <span className="font-black">#{r["rank"] || i + 1}</span>
+                <span className="mx-2 opacity-40">•</span>
+                <span className="whitespace-nowrap">{dtPrev}</span>
+              </div>
+              <div className="tabular-nums font-black text-sm">{scorePrev}</div>
+            </div>
 
-                            {!fx.top_rows.length && (
-                              <tr>
-                                <td colSpan={5} className="p-4 text-center text-xs opacity-70">
-                                  Sem linhas no TOP.
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </details>
+            <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="truncate font-bold">{homePrev}</span>
+                  {homePosThen != null && <PosBadge small pos={homePosThen} />}
+                </div>
+              </div>
+
+              <div className="text-xs font-black opacity-60">×</div>
+
+              <div className="min-w-0 text-right">
+                <div className="flex items-center justify-end gap-2 min-w-0">
+                  {awayPosThen != null && <PosBadge small pos={awayPosThen} />}
+                  <span className="truncate font-bold">{awayPrev}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {!fx.top_rows.length && (
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center text-xs opacity-70">
+          Sem linhas no TOP.
+        </div>
+      )}
+    </div>
+
+    {/* ✅ DESKTOP: tabela normal */}
+    <div className="hidden md:block overflow-auto rounded-2xl border border-white/10 bg-black/20">
+      <table className="min-w-[760px] w-full text-xs">
+        <thead className="sticky top-0 bg-zinc-950/90 backdrop-blur border-b border-white/10">
+          <tr>
+            <th className="p-3 text-right">#</th>
+            <th className="p-3 whitespace-nowrap">Data</th>
+            <th className="p-3">Mandante</th>
+            <th className="p-3">Visitante</th>
+            <th className="p-3 text-right">Placar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {fx.top_rows.slice(0, 12).map((r: Record<string, string>, i: number) => {
+            const dtPrev = fmtDateBrOnly(r["utcDate_prev"] || "");
+            const homePrev = r["home_prev"] || "";
+            const awayPrev = r["away_prev"] || "";
+            const scorePrev = r["score_fulltime_prev"] || "";
+
+            const target = r["target_team"] || "";
+            const opp = r["opponent"] || "";
+            const tp = tryInt(r["target_pos_then"]);
+            const op = tryInt(r["opponent_pos_then"]);
+
+            let homePosThen: number | null = null;
+            let awayPosThen: number | null = null;
+
+            const nTarget = normTeam(target);
+            const nOpp = normTeam(opp);
+            const nHomePrev = normTeam(homePrev);
+            const nAwayPrev = normTeam(awayPrev);
+
+            if (nTarget === nHomePrev) {
+              homePosThen = tp;
+              awayPosThen = op;
+            } else if (nTarget === nAwayPrev) {
+              homePosThen = op;
+              awayPosThen = tp;
+            } else {
+              if (nOpp === nHomePrev) {
+                homePosThen = op;
+                awayPosThen = tp;
+              } else if (nOpp === nAwayPrev) {
+                homePosThen = tp;
+                awayPosThen = op;
+              }
+            }
+
+            return (
+              <tr key={i} className="border-b border-white/5">
+                <td className="p-3 text-right tabular-nums opacity-85">{r["rank"] || i + 1}</td>
+                <td className="p-3 whitespace-nowrap opacity-85">{dtPrev}</td>
+                <td className="p-3">
+                  {homePrev} {homePosThen != null && <PosBadge small pos={homePosThen} />}
+                </td>
+                <td className="p-3">
+                  {awayPrev} {awayPosThen != null && <PosBadge small pos={awayPosThen} />}
+                </td>
+                <td className="p-3 text-right tabular-nums font-black">{scorePrev}</td>
+              </tr>
+            );
+          })}
+
+          {!fx.top_rows.length && (
+            <tr>
+              <td colSpan={5} className="p-4 text-center text-xs opacity-70">
+                Sem linhas no TOP.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</details>
+
                   </div>
                 );
               })}
