@@ -1,0 +1,3 @@
+﻿generated_at,competition,fixture_id,utcDate,matchday,side,team_id,team_name,pos,pts,pl,w,d,l,gf,ga,gd,gfpg_now,gapg_now,opponent_team_id,opponent_team_name,opponent_pos_now,pos_tol
+2026-02-01 06:28:35,PPL,545874,2026-02-01T20:30:00Z,20,HOME,1049,CD Tondela,17,12,19,3,3,13,12,33,-21,0.632,1.737,1903,Sport Lisboa e Benfica,3,3
+2026-02-01 06:28:35,PPL,545874,2026-02-01T20:30:00Z,20,AWAY,1903,Sport Lisboa e Benfica,3,45,19,13,6,0,42,11,31,2.211,0.579,1049,CD Tondela,17,3

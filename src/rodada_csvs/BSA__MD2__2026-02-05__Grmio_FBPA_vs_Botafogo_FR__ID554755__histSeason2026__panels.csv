@@ -1,0 +1,3 @@
+﻿generated_at,competition,fixture_id,utcDate,matchday,side,team_id,team_name,pos,pts,pl,w,d,l,gf,ga,gd,gfpg_now,gapg_now,opponent_team_id,opponent_team_name,opponent_pos_now,pos_tol
+2026-02-01 06:17:12,BSA,554755,2026-02-05T00:30:00Z,2,HOME,1767,Grêmio FBPA,12,0,1,0,0,1,1,2,-1,1.000,2.000,1770,Botafogo FR,1,3
+2026-02-01 06:17:12,BSA,554755,2026-02-05T00:30:00Z,2,AWAY,1770,Botafogo FR,1,3,1,1,0,0,4,0,4,4.000,0.000,1767,Grêmio FBPA,12,3
