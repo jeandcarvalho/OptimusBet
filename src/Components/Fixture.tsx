@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import { useNavigate, useParams } from "react-router-dom";
 
-import Footer from "../Components/Footer";
+
 import { parseCsv, fmtDateBrOnly, fmtNum, tryInt, type Row } from "../lib/rodada";
 
 // ✅ build-time CSVs
