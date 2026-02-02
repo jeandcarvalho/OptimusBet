@@ -1,0 +1,3 @@
+﻿generated_at,competition,fixture_id,utcDate,matchday,side,team_id,team_name,pos,pts,pl,w,d,l,gf,ga,gd,gfpg_now,gapg_now,opponent_team_id,opponent_team_name,opponent_pos_now,pos_tol
+2026-02-02 02:41:43,PD,544432,2026-02-08T15:15:00Z,23,HOME,77,Athletic Club,11,25,22,7,4,11,21,31,-10,0.955,1.409,88,Levante UD,19,3
+2026-02-02 02:41:43,PD,544432,2026-02-08T15:15:00Z,23,AWAY,88,Levante UD,19,18,21,4,6,11,24,34,-10,1.143,1.619,77,Athletic Club,11,3

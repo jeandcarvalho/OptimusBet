@@ -1,0 +1,9 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
+AFC Bournemouth,bournemouth,Bournemouth,bournemouth,1.0,True,ok
+Aston Villa FC,aston villa,Aston Villa,aston villa,1.0,True,ok
+Brentford FC,brentford,Brentford,brentford,1.0,True,ok
+Brighton & Hove Albion FC,brighton and hove albion,Brighton,brighton,0.9333,True,ok
+Burnley FC,burnley,Burnley,burnley,1.0,True,ok
+Manchester United FC,manchester united,Man United,man united,0.7407,True,ok
+Newcastle United FC,newcastle united,Newcastle,newcastle,0.9563,True,ok
+West Ham United FC,west ham united,West Ham,west ham,0.9533,True,ok

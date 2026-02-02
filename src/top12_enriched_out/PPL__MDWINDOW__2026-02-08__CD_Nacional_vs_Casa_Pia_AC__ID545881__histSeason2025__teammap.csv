@@ -1,0 +1,9 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
+AVS,avs,AVS,avs,1.0,True,ok
+CD Nacional,cd nacional,Nacional,nacional,0.9727,True,ok
+CD Santa Clara,cd santa clara,Santa Clara,santa clara,0.9786,True,ok
+CD Tondela,cd tondela,Tondela,tondela,0.97,True,ok
+Casa Pia AC,casa pia,Casa Pia,casa pia,1.0,True,ok
+FC Arouca,arouca,Arouca,arouca,1.0,True,ok
+Rio Ave FC,rio ave,Rio Ave,rio ave,1.0,True,ok
+Sporting Clube de Braga,sporting braga,Sp Braga,sp braga,0.7273,True,ok

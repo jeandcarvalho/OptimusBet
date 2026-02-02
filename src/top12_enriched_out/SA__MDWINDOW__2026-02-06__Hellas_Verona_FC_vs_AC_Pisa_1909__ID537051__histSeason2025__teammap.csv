@@ -1,0 +1,6 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
+AC Pisa 1909,pisa 1909,Pisa,pisa,0.9444,True,ok
+Genoa CFC,genoa,Genoa,genoa,1.0,True,ok
+Hellas Verona FC,hellas verona,Verona,verona,0.9462,True,ok
+Parma Calcio 1913,parma calcio 1913,Parma,parma,0.9294,True,ok
+US Lecce,us lecce,Lecce,lecce,0.9625,True,ok

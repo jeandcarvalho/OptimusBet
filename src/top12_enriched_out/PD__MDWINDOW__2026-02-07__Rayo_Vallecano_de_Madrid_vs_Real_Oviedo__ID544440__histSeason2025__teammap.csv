@@ -1,0 +1,5 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
+CA Osasuna,ca osasuna,Osasuna,osasuna,0.97,True,ok
+Deportivo Alavés,deportivo alaves,Alaves,alaves,0.9375,True,ok
+Girona FC,girona,Girona,girona,1.0,True,ok
+Real Oviedo,real oviedo,Oviedo,oviedo,0.9545,True,ok

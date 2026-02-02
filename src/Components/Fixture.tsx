@@ -1,7 +1,7 @@
 // src/Pages/Fixture.tsx
 import React, { useEffect, useMemo, useState } from "react";
 
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import Footer from "../Components/Footer";
 import { parseCsv, fmtDateBrOnly, fmtNum, tryInt, type Row } from "../lib/rodada";
@@ -118,7 +118,7 @@ function confidenceFromCv(cv: number | null): { pct: number | null; tone: ConfTo
   const pct = Math.round(100 - (clamped / cap) * 100);
 
   const tone: ConfTone = cv <= CV_VERDE_MAX ? "green" : cv <= CV_AMARELO_MAX ? "yellow" : "red";
-  const label = tone === "green" ? "confiável" : tone === "yellow" ? "média" : "baixa";
+  const label = tone === "green" ? "variância confiável" : tone === "yellow" ? "variância média" : "variância baixa";
   return { pct, tone, label };
 }
 
@@ -317,9 +317,9 @@ function SectionCard({
 }) {
   const toneBg =
     tone === "home"
-      ? "bg-[radial-gradient(1000px_260px_at_20%_0%,rgba(47,125,255,0.24),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(0,0,0,0.30))]"
+      ? "bg-[radial-gradient(1000px_3260px_at_20%_0%,rgba(47,125,255,0.24),transparent_92%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(0,0,0,0.30))]"
       : tone === "away"
-      ? "bg-[radial-gradient(1000px_260px_at_80%_0%,rgba(255,59,59,0.20),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(0,0,0,0.30))]"
+      ? "bg-[radial-gradient(1000px_3260px_at_80%_0%,rgba(255,59,59,0.20),transparent_92%),linear-gradient(180deg,rgba(255,255,255,0.12),rgba(0,0,0,0.30))]"
       : "bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(0,0,0,0.28))]";
 
   return (
@@ -373,7 +373,6 @@ function MobileSimilarAccordion({
 
   return (
     <div className={["rounded-2xl border p-3 md:hidden", boxTone].join(" ")}>
-
       <div className="mt-3 grid gap-2">
         {rows.map((p, i) => {
           const ok = p.fd_found;
@@ -536,7 +535,6 @@ function SimilarSection({
 }) {
   const toneCls = tone === "home" ? "border-blue-400/20 bg-blue-500/5" : "border-red-400/20 bg-red-500/5";
 
-
   return (
     <div className={["rounded-2xl border p-3", toneCls].join(" ")}>
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -544,7 +542,6 @@ function SimilarSection({
           <div className="text-sm font-black">{title}</div>
           <div className="text-[11px] opacity-70 mb-1">{subtitle}</div>
         </div>
-
       </div>
 
       {/* Mobile: accordion por jogo (tudo fechado) */}
@@ -560,9 +557,8 @@ function SimilarSection({
 // Page
 // ----------------------------------------------------
 export default function Fixture() {
-    
+  const navigate = useNavigate();
   const { id = "" } = useParams();
-
 
   const enrichedFile = useMemo(() => pickByFixtureId(ENRICH_RAW, id), [id]);
   const panelsFile = useMemo(() => pickByFixtureId(PANELS_RAW, id), [id]);
@@ -624,9 +620,9 @@ export default function Fixture() {
   }
 
   useEffect(() => {
-  // volta pro topo ao abrir a página / trocar o ID
-  window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
-}, [id]);
+    // volta pro topo ao abrir a página / trocar o ID
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+  }, [id]);
 
   const homeStats = useMemo(() => buildStats(picksHomeValid), [picksHomeValid]);
   const awayStats = useMemo(() => buildStats(picksAwayValid), [picksAwayValid]);
@@ -643,6 +639,14 @@ export default function Fixture() {
         <div className="mx-auto max-w-[1400px] p-3 md:p-4">
           {/* top actions */}
           <div className="flex items-center justify-between gap-3">
+            {/* ✅ BOTÃO VOLTAR */}
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black hover:bg-white/10"
+            >
+              ← Voltar
+            </button>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
               <Pill cls="border-white/10 bg-zinc-950/40">ID {meta.fixture_id}</Pill>
@@ -651,88 +655,82 @@ export default function Fixture() {
               {dt && <Pill cls="border-white/10 bg-zinc-950/40">{dt}</Pill>}
             </div>
           </div>
-{/* HERO header */}
-<div
-  className="mt-4 rounded-2xl border border-white/10 overflow-x-hidden
-  bg-[radial-gradient(1100px_280px_at_20%_0%,rgba(47,125,255,0.26),transparent_62%),
-      radial-gradient(1100px_280px_at_80%_0%,rgba(255,59,59,0.28),transparent_62%),
-      linear-gradient(180deg,rgba(255,255,255,0.14),rgba(0,0,0,0.34))]
-  p-3 sm:p-4 md:p-6 shadow-2xl"
->
-  <div className="flex flex-col items-center text-center">
-    <div className="text-[11px] font-bold uppercase tracking-wide opacity-75">
-      Pré-jogo com base nos TOP-12 similares
-    </div>
 
-    {/* CONFRONTO */}
-    <div className="mt-2 w-full min-w-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+          {/* HERO header */}
+          <div
+            className="mt-4 rounded-2xl border border-white/10 overflow-x-hidden
+            bg-[radial-gradient(1100px_280px_at_20%_0%,rgba(47,125,255,0.26),transparent_62%),
+                radial-gradient(1100px_280px_at_80%_0%,rgba(255,59,59,0.28),transparent_62%),
+                linear-gradient(180deg,rgba(255,255,255,0.10),rgba(0,0,0,0.18))
 
-      {/* CASA */}
-      <div className="min-w-0 text-left">
-        <div
-          className="inline-flex max-w-full min-w-0 flex-col rounded-2xl
-          border border-blue-400/30
-          bg-[linear-gradient(180deg,rgba(59,130,246,0.25),rgba(59,130,246,0.10))]
-          px-2 py-1.5 sm:px-3 sm:py-2"
-        >
-          <div className="inline-flex items-center gap-2">
-            <span className="text-[11px] font-black text-blue-200 shrink-0">
-              CASA
-            </span>
-            <BigPos pos={panelInfo.homePos} tone="home" />
-          </div>
+            p-3 sm:p-4 md:p-6 shadow-2xl"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="text-[11px] font-bold uppercase tracking-wide opacity-75">
+                Pré-jogo com base nos TOP-12 similares
+              </div>
 
-          {panelInfo.homePts != null && (
-            <div className="mt-0.5 text-[10px] text-blue-200/80 font-bold tabular-nums">
-              {panelInfo.homePts} pts
+              {/* CONFRONTO */}
+              <div className="mt-2 w-full min-w-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+                {/* CASA */}
+                <div className="min-w-0 text-left">
+                  <div
+                    className="inline-flex max-w-full min-w-0 flex-col rounded-2xl
+                    border border-blue-400/30
+                    bg-[linear-gradient(180deg,rgba(59,130,246,0.25),rgba(59,130,246,0.10))]
+                    px-2 py-1.5 sm:px-3 sm:py-2"
+                  >
+                    <div className="inline-flex items-center gap-2">
+                      <span className="text-[11px] font-black text-blue-200 shrink-0">CASA</span>
+                      <BigPos pos={panelInfo.homePos} tone="home" />
+                    </div>
+
+                    {panelInfo.homePts != null && (
+                      <div className="mt-0.5 text-[10px] text-blue-200/80 font-bold tabular-nums">
+                        {panelInfo.homePts} pts
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-2 text-[16px] sm:text-xl md:text-2xl font-black leading-tight break-words">
+                    {homeTitle}
+                  </div>
+                </div>
+
+                {/* VS */}
+                <div className="flex flex-col items-center justify-center">
+                  <div className="rounded-full border border-white/10 bg-black/30 px-3 py-1.5">
+                    <div className="text-xs font-black opacity-80">×</div>
+                  </div>
+                </div>
+
+                {/* FORA */}
+                <div className="min-w-0 text-right">
+                  <div
+                    className="inline-flex max-w-full min-w-0 flex-col items-end rounded-2xl
+                    border border-red-400/30
+                    bg-[linear-gradient(180deg,rgba(239,68,68,0.28),rgba(239,68,68,0.12))]
+                    px-2 py-1.5 sm:px-3 sm:py-2"
+                  >
+                    <div className="inline-flex items-center gap-2">
+                      <BigPos pos={panelInfo.awayPos} tone="away" />
+                      <span className="text-[11px] font-black text-red-200 shrink-0">FORA</span>
+                    </div>
+
+                    {panelInfo.awayPts != null && (
+                      <div className="mt-0.5 text-[10px] text-red-200/80 font-bold tabular-nums">
+                        {panelInfo.awayPts} pts
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-2 text-[16px] sm:text-xl md:text-2xl font-black leading-tight break-words">
+                    {awayTitle}
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-
-        <div className="mt-2 text-[16px] sm:text-xl md:text-2xl font-black leading-tight break-words">
-          {homeTitle}
-        </div>
-      </div>
-
-      {/* VS */}
-      <div className="flex flex-col items-center justify-center">
-        <div className="rounded-full border border-white/10 bg-black/30 px-3 py-1.5">
-          <div className="text-xs font-black opacity-80">×</div>
-        </div>
-      </div>
-
-      {/* FORA */}
-      <div className="min-w-0 text-right">
-        <div
-          className="inline-flex max-w-full min-w-0 flex-col items-end rounded-2xl
-          border border-red-400/30
-          bg-[linear-gradient(180deg,rgba(239,68,68,0.28),rgba(239,68,68,0.12))]
-          px-2 py-1.5 sm:px-3 sm:py-2"
-        >
-          <div className="inline-flex items-center gap-2">
-            <BigPos pos={panelInfo.awayPos} tone="away" />
-            <span className="text-[11px] font-black text-red-200 shrink-0">
-              FORA
-            </span>
           </div>
-
-          {panelInfo.awayPts != null && (
-            <div className="mt-0.5 text-[10px] text-red-200/80 font-bold tabular-nums">
-              {panelInfo.awayPts} pts
-            </div>
-          )}
-        </div>
-
-        <div className="mt-2 text-[16px] sm:text-xl md:text-2xl font-black leading-tight break-words">
-          {awayTitle}
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
-
-
 
           {!okEnriched && (
             <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm">
@@ -759,18 +757,48 @@ export default function Fixture() {
                 <div className="grid gap-3">
                   <MetricGroup title="Ataque (a favor)">
                     <StatRow label="Gols" simple={homeStats.gf.s} weighted={homeStats.gf.w} conf={homeStats.gf.conf} />
-                    <StatRow label="Chutes" simple={homeStats.shots.s} weighted={homeStats.shots.w} conf={homeStats.shots.conf} />
-                    <StatRow label="Chutes no alvo" simple={homeStats.shotsOn.s} weighted={homeStats.shotsOn.w} conf={homeStats.shotsOn.conf} />
+                    <StatRow
+                      label="Chutes"
+                      simple={homeStats.shots.s}
+                      weighted={homeStats.shots.w}
+                      conf={homeStats.shots.conf}
+                    />
+                    <StatRow
+                      label="Chutes no alvo"
+                      simple={homeStats.shotsOn.s}
+                      weighted={homeStats.shotsOn.w}
+                      conf={homeStats.shotsOn.conf}
+                    />
                   </MetricGroup>
 
                   <MetricGroup title="Bolas paradas (a favor)">
-                    <StatRow label="Escanteios" simple={homeStats.corners.s} weighted={homeStats.corners.w} conf={homeStats.corners.conf} />
+                    <StatRow
+                      label="Escanteios"
+                      simple={homeStats.corners.s}
+                      weighted={homeStats.corners.w}
+                      conf={homeStats.corners.conf}
+                    />
                   </MetricGroup>
 
                   <MetricGroup title="Disciplina (a favor)">
-                    <StatRow label="Faltas" simple={homeStats.fouls.s} weighted={homeStats.fouls.w} conf={homeStats.fouls.conf} />
-                    <StatRow label="Amarelos" simple={homeStats.yellows.s} weighted={homeStats.yellows.w} conf={homeStats.yellows.conf} />
-                    <StatRow label="Vermelhos" simple={homeStats.reds.s} weighted={homeStats.reds.w} conf={homeStats.reds.conf} />
+                    <StatRow
+                      label="Faltas"
+                      simple={homeStats.fouls.s}
+                      weighted={homeStats.fouls.w}
+                      conf={homeStats.fouls.conf}
+                    />
+                    <StatRow
+                      label="Amarelos"
+                      simple={homeStats.yellows.s}
+                      weighted={homeStats.yellows.w}
+                      conf={homeStats.yellows.conf}
+                    />
+                    <StatRow
+                      label="Vermelhos"
+                      simple={homeStats.reds.s}
+                      weighted={homeStats.reds.w}
+                      conf={homeStats.reds.conf}
+                    />
                   </MetricGroup>
                 </div>
               </SectionCard>
@@ -787,18 +815,48 @@ export default function Fixture() {
                 <div className="grid gap-3">
                   <MetricGroup title="Ataque (a favor)">
                     <StatRow label="Gols" simple={awayStats.gf.s} weighted={awayStats.gf.w} conf={awayStats.gf.conf} />
-                    <StatRow label="Chutes" simple={awayStats.shots.s} weighted={awayStats.shots.w} conf={awayStats.shots.conf} />
-                    <StatRow label="Chutes no alvo" simple={awayStats.shotsOn.s} weighted={awayStats.shotsOn.w} conf={awayStats.shotsOn.conf} />
+                    <StatRow
+                      label="Chutes"
+                      simple={awayStats.shots.s}
+                      weighted={awayStats.shots.w}
+                      conf={awayStats.shots.conf}
+                    />
+                    <StatRow
+                      label="Chutes no alvo"
+                      simple={awayStats.shotsOn.s}
+                      weighted={awayStats.shotsOn.w}
+                      conf={awayStats.shotsOn.conf}
+                    />
                   </MetricGroup>
 
                   <MetricGroup title="Bolas paradas (a favor)">
-                    <StatRow label="Escanteios" simple={awayStats.corners.s} weighted={awayStats.corners.w} conf={awayStats.corners.conf} />
+                    <StatRow
+                      label="Escanteios"
+                      simple={awayStats.corners.s}
+                      weighted={awayStats.corners.w}
+                      conf={awayStats.corners.conf}
+                    />
                   </MetricGroup>
 
                   <MetricGroup title="Disciplina (a favor)">
-                    <StatRow label="Faltas" simple={awayStats.fouls.s} weighted={awayStats.fouls.w} conf={awayStats.fouls.conf} />
-                    <StatRow label="Amarelos" simple={awayStats.yellows.s} weighted={awayStats.yellows.w} conf={awayStats.yellows.conf} />
-                    <StatRow label="Vermelhos" simple={awayStats.reds.s} weighted={awayStats.reds.w} conf={awayStats.reds.conf} />
+                    <StatRow
+                      label="Faltas"
+                      simple={awayStats.fouls.s}
+                      weighted={awayStats.fouls.w}
+                      conf={awayStats.fouls.conf}
+                    />
+                    <StatRow
+                      label="Amarelos"
+                      simple={awayStats.yellows.s}
+                      weighted={awayStats.yellows.w}
+                      conf={awayStats.yellows.conf}
+                    />
+                    <StatRow
+                      label="Vermelhos"
+                      simple={awayStats.reds.s}
+                      weighted={awayStats.reds.w}
+                      conf={awayStats.reds.conf}
+                    />
                   </MetricGroup>
                 </div>
               </SectionCard>
@@ -814,8 +872,6 @@ export default function Fixture() {
                 <SimilarSection
                   tone="home"
                   title={`Tabela dos similares — Perspectiva do Mandante 🔵 【 ${homeTitle.toUpperCase()} 】`}
-
-
                   subtitle=""
                   rows={picksHomeAll}
                 />

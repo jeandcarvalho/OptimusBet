@@ -1,9 +1,0 @@
-api_name,api_canon,best_fd_name,best_fd_canon,score,accepted
-AJ Auxerre,aj auxerre,Auxerre,auxerre,0.955,True
-FC Metz,metz,Metz,metz,1.0,True
-FC Nantes,nantes,Nantes,nantes,1.0,True
-OGC Nice,ogc nice,Nice,nice,0.925,True
-RC Strasbourg Alsace,rc strasbourg alsace,Strasbourg,strasbourg,0.925,True
-Stade Brestois 29,stade brestois 29,Brest,brest,0.8941,True
-Stade Rennais FC 1901,stade rennais 1901,,,0.0,False
-Toulouse FC,toulouse,Toulouse,toulouse,1.0,True
