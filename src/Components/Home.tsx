@@ -2,8 +2,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import Footer from "../Components/Footer";
-
 import {
   buildFixtureStats,
   confiabBucket,
@@ -1143,7 +1141,6 @@ const Home: React.FC = () => {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 };

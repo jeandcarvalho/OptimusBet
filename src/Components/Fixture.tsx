@@ -118,7 +118,7 @@ function confidenceFromCv(cv: number | null): { pct: number | null; tone: ConfTo
   const pct = Math.round(100 - (clamped / cap) * 100);
 
   const tone: ConfTone = cv <= CV_VERDE_MAX ? "green" : cv <= CV_AMARELO_MAX ? "yellow" : "red";
-  const label = tone === "green" ? "variância baixa" : tone === "yellow" ? "variância média" : "variância alta";
+  const label = tone === "green" ? "variância confiável" : tone === "yellow" ? "variância confiável" : "variância confiável";
   return { pct, tone, label };
 }
 
@@ -892,7 +892,6 @@ export default function Fixture() {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }
