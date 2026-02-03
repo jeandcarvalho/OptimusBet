@@ -118,7 +118,7 @@ function confidenceFromCv(cv: number | null): { pct: number | null; tone: ConfTo
   const pct = Math.round(100 - (clamped / cap) * 100);
 
   const tone: ConfTone = cv <= CV_VERDE_MAX ? "green" : cv <= CV_AMARELO_MAX ? "yellow" : "red";
-  const label = tone === "green" ? "confiança alta" : tone === "yellow" ? " confiança média" : " confiança baixa";
+  const label = tone === "green" ? "confiança alta" : tone === "yellow" ? " confiança média " : " confiança baixa";
   return { pct, tone, label };
 }
 
