@@ -1,67 +1,35 @@
-// Pages/Home.tsx
+// src/Pages/Home.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import {
-  buildFixtureStats,
-  confiabBucket,
-  confiabilidadeFromCv,
-  fmtDateBrOnly,
-  fmtNum,
-  mean,
-  mean2,
-  parseCsv,
-  tryInt,
-  wcvPercent,
-  wmean,
-  type FixtureStats,
-  type Row,
-} from "../lib/rodada";
+import { parseCsv, fmtDateBrOnly, tryInt, type Row } from "../lib/rodada";
 
-// =====================================================
-// ✅ CSVs embutidos (build-time)
-// Coloque os CSVs em: src/rodada_csvs/
-// =====================================================
-const CSV_RAW = import.meta.glob("../rodada_csvs/*.csv", { as: "raw", eager: true }) as Record<string, string>;
+// ✅ build-time CSVs
+const PANELS_RAW = import.meta.glob("../rodada_csvs/*__panels.csv", {
+  as: "raw",
+  eager: true,
+}) as Record<string, string>;
 
-// =====================================================
-// League keys (expansível)
-// =====================================================
+// ----------------------------------------------------
+// leagues from filename prefix (PL__, PD__, etc.)
+// ----------------------------------------------------
 type LeagueKey =
-  | "PL" // Premier League
-  | "PD" // LaLiga
-  | "SA" // Serie A (ITA)
-  | "BL1" // Bundesliga
-  | "FL1" // Ligue 1
-  | "DED" // Eredivisie
-  | "PPL" // Primeira Liga (POR)
-  | "CL" // Champions League
-  | "EL" // Europa League
-  | "ECL" // Conference League
-  | "BSA" // Brasileirão Série A
-  | "BR2" // Brasileirão Série B
+  | "PL"
+  | "PD"
+  | "SA"
+  | "BL1"
+  | "FL1"
+  | "DED"
+  | "PPL"
+  | "CL"
+  | "EL"
+  | "ECL"
+  | "BSA"
+  | "BR2"
   | "OTHER";
 
-type Pair = {
-  baseKey: string;
-  topPath: string;
-  panelsPath?: string;
-  league: LeagueKey;
-};
-
-type FxUI = FixtureStats & {
-  league: LeagueKey;
-  baseKey: string;
-  // ✅ nomes canônicos para exibição e matching
-  display_home: string;
-  display_away: string;
-  // ✅ posições canônicas (robustas)
-  home_pos: number | null;
-  away_pos: number | null;
-};
-
 function leagueFromFilename(file: string): LeagueKey {
-  const f = (file || "").trim();
+  const f = (file || "").trim().toUpperCase();
 
   const prefixes: Array<[string, LeagueKey]> = [
     ["PL__", "PL"],
@@ -80,7 +48,7 @@ function leagueFromFilename(file: string): LeagueKey {
 
   for (const [p, k] of prefixes) if (f.startsWith(p)) return k;
 
-  const token = f.split("__")[0]?.toUpperCase() || "";
+  const token = f.split("__")[0] || "";
   const map: Record<string, LeagueKey> = {
     PL: "PL",
     PD: "PD",
@@ -129,7 +97,6 @@ function leagueLabel(k: LeagueKey): string {
   }
 }
 
-// ✅ cores estáveis por torneio
 function leagueDotClass(k: LeagueKey): string {
   switch (k) {
     case "PL":
@@ -161,245 +128,45 @@ function leagueDotClass(k: LeagueKey): string {
   }
 }
 
-function leaguePillClass(k: LeagueKey): string {
-  switch (k) {
-    case "PL":
-      return "border-emerald-400/30 bg-emerald-400/10 text-emerald-200";
-    case "PD":
-      return "border-amber-300/30 bg-amber-300/10 text-amber-200";
-    case "SA":
-      return "border-sky-300/30 bg-sky-300/10 text-sky-200";
-    case "BL1":
-      return "border-red-400/30 bg-red-400/10 text-red-200";
-    case "FL1":
-      return "border-indigo-300/30 bg-indigo-300/10 text-indigo-200";
-    case "DED":
-      return "border-orange-300/30 bg-orange-300/10 text-orange-200";
-    case "PPL":
-      return "border-lime-300/30 bg-lime-300/10 text-lime-200";
-    case "CL":
-      return "border-violet-300/30 bg-violet-300/10 text-violet-200";
-    case "EL":
-      return "border-orange-400/30 bg-orange-400/10 text-orange-200";
-    case "ECL":
-      return "border-teal-300/30 bg-teal-300/10 text-teal-200";
-    case "BSA":
-      return "border-green-400/30 bg-green-400/10 text-green-200";
-    case "BR2":
-      return "border-yellow-300/30 bg-yellow-300/10 text-yellow-200";
-    default:
-      return "border-white/10 bg-white/5 text-zinc-200";
-  }
+function leaguePillClass(k: LeagueKey, on: boolean): string {
+  const base =
+    "rounded-full border px-3 py-1 text-[11px] font-black inline-flex items-center gap-2 transition";
+  if (!on) return `${base} border-white/10 bg-white/5 text-zinc-200 opacity-80 hover:opacity-100`;
+  // ON
+  const tone =
+    k === "PL"
+      ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
+      : k === "PD"
+      ? "border-amber-300/30 bg-amber-300/10 text-amber-200"
+      : k === "SA"
+      ? "border-sky-300/30 bg-sky-300/10 text-sky-200"
+      : k === "BL1"
+      ? "border-red-400/30 bg-red-400/10 text-red-200"
+      : k === "FL1"
+      ? "border-indigo-300/30 bg-indigo-300/10 text-indigo-200"
+      : k === "DED"
+      ? "border-orange-300/30 bg-orange-300/10 text-orange-200"
+      : k === "PPL"
+      ? "border-lime-300/30 bg-lime-300/10 text-lime-200"
+      : k === "CL"
+      ? "border-violet-300/30 bg-violet-300/10 text-violet-200"
+      : k === "EL"
+      ? "border-orange-400/30 bg-orange-400/10 text-orange-200"
+      : k === "ECL"
+      ? "border-teal-300/30 bg-teal-300/10 text-teal-200"
+      : k === "BSA"
+      ? "border-green-400/30 bg-green-400/10 text-green-200"
+      : k === "BR2"
+      ? "border-yellow-300/30 bg-yellow-300/10 text-yellow-200"
+      : "border-white/20 bg-white/10 text-zinc-100";
+  return `${base} ${tone}`;
 }
 
-// =====================================================
-// Parsing pairs from glob
-// =====================================================
-function buildPairsFromGlob(rawMap: Record<string, string>): Pair[] {
-  const keys = Object.keys(rawMap);
-  const buckets = new Map<string, { topPath?: string; panelsPath?: string; league: LeagueKey }>();
-
-  for (const p of keys) {
-    const file = p.split("/").pop() || p;
-
-    const isTop = file.includes("__top") && file.endsWith(".csv"); // "__top.csv" ou "__top12.csv"
-    const isPanels = file.endsWith("__panels.csv");
-    if (!isTop && !isPanels) continue;
-
-    const league = leagueFromFilename(file);
-
-    let base = file;
-    if (isPanels) {
-      base = file.replace("__panels.csv", "");
-    } else {
-      const idx = file.lastIndexOf("__top");
-      base = idx >= 0 ? file.slice(0, idx) : file.replace(".csv", "");
-    }
-
-    const rec = buckets.get(base) || { league };
-    if (rec.league === "OTHER" && league !== "OTHER") rec.league = league;
-
-    if (isPanels) rec.panelsPath = p;
-    if (isTop) rec.topPath = p;
-
-    buckets.set(base, rec);
-  }
-
-  const out: Pair[] = [];
-  for (const [baseKey, v] of buckets.entries()) {
-    if (!v.topPath) continue;
-    out.push({ baseKey, topPath: v.topPath, panelsPath: v.panelsPath, league: v.league });
-  }
-  return out;
+function keyFromPanelFilename(path: string): string {
+  const file = path.split("/").pop() || path;
+  return file.replace(/\.CSV$/i, "").replace(/\.csv$/i, "");
 }
 
-function stripFixturePrefix(teamOrLabel: string): string {
-  let s = (teamOrLabel || "").trim();
-  if (!s) return s;
-
-  s = s.replace(/^MD\s*\d+\s*[-–—•|]?\s*\d{4}-\d{2}-\d{2}\s*[-–—•|]?\s*/i, "").trim();
-  s = s.replace(/^\d{4}-\d{2}-\d{2}\s*[-–—•|]?\s*/i, "").trim();
-
-  return s;
-}
-
-function looksDirtyTeamName(s: string): boolean {
-  const t = (s || "").trim();
-  if (!t) return true;
-  if (/^MD\s*\d+/i.test(t)) return true;
-  if (/\d{4}-\d{2}-\d{2}/.test(t)) return true;
-  return /histSeason/i.test(t) || /ID\d+/i.test(t) || t.includes("__") || t.includes("_vs_");
-}
-
-function titleFromBaseKey(baseKey: string): { home: string; away: string } | null {
-  const m = baseKey.match(/__([^_].*?)_vs_(.*?)__/);
-  if (!m) return null;
-
-  const home = (m[1] || "").replace(/_/g, " ").trim();
-  const away = (m[2] || "").replace(/_/g, " ").trim();
-
-  if (!home || !away) return null;
-  return { home, away };
-}
-
-function fmtDateTimeBrPretty(iso: string): string {
-  const s = (iso || "").trim();
-  if (!s) return "";
-
-  const d = new Date(s);
-  if (Number.isNaN(d.getTime())) return fmtDateBrOnly(s) || s;
-
-  const date = new Intl.DateTimeFormat("pt-BR", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(d);
-
-  const time = new Intl.DateTimeFormat("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
-
-  return `${date} • ${time}`;
-}
-
-// =====================================================
-// ✅ Team name canonicalization
-// =====================================================
-function normTeam(s: string): string {
-  return (s || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-
-function collectTeamCandidates(topRows: Array<Record<string, string>>): string[] {
-  const cols = ["home_prev", "away_prev", "target_team", "opponent", "home", "away", "home_fixture", "away_fixture"];
-  const out: string[] = [];
-  for (const r of topRows || []) for (const c of cols) if ((r?.[c] || "").trim()) out.push((r?.[c] || "").trim());
-  return out;
-}
-
-function pickDisplayName(seed: string, topRows: Array<Record<string, string>>): string {
-  const seedN = normTeam(seed);
-  if (!seedN) return seed;
-
-  const cand = collectTeamCandidates(topRows);
-  const freq = new Map<string, { original: string; count: number; bestLen: number }>();
-
-  for (const s of cand) {
-    const n = normTeam(s);
-    if (!n || n !== seedN) continue;
-
-    const rec = freq.get(n);
-    if (!rec) freq.set(n, { original: s, count: 1, bestLen: s.length });
-    else {
-      rec.count += 1;
-      if (s.length > rec.bestLen) {
-        rec.original = s;
-        rec.bestLen = s.length;
-      }
-    }
-  }
-
-  return freq.get(seedN)?.original || seed;
-}
-
-function estimatePosRobust(topRows: Array<Record<string, string>>, teamName: string): number | null {
-  const tn = normTeam(teamName);
-  if (!tn) return null;
-
-  const pos: number[] = [];
-  for (const r of topRows || []) {
-    const target = normTeam(r["target_team"] || "");
-    const opp = normTeam(r["opponent"] || "");
-
-    if (target && target === tn) {
-      const p = tryInt(r["target_pos_then"]);
-      if (p != null) pos.push(p);
-    }
-    if (opp && opp === tn) {
-      const p = tryInt(r["opponent_pos_then"]);
-      if (p != null) pos.push(p);
-    }
-  }
-
-  if (!pos.length) return null;
-
-  const counts = new Map<number, number>();
-  for (const p of pos) counts.set(p, (counts.get(p) || 0) + 1);
-
-  let bestPos = pos[0];
-  let bestCount = -1;
-  for (const [p, c] of counts.entries()) {
-    if (c > bestCount || (c === bestCount && p < bestPos)) {
-      bestPos = p;
-      bestCount = c;
-    }
-  }
-  return bestPos;
-}
-
-function resolveCanonicalNames(fx: FixtureStats & { baseKey: string }): { home: string; away: string } {
-  const fallback = titleFromBaseKey(fx.baseKey);
-
-  const metaHomeClean = stripFixturePrefix(fx.meta.home_name || "");
-  const metaAwayClean = stripFixturePrefix(fx.meta.away_name || "");
-
-  const seedHome = !looksDirtyTeamName(metaHomeClean) ? metaHomeClean : fallback?.home || metaHomeClean || fx.meta.home_name;
-  const seedAway = !looksDirtyTeamName(metaAwayClean) ? metaAwayClean : fallback?.away || metaAwayClean || fx.meta.away_name;
-
-  const home = pickDisplayName(seedHome, fx.top_rows);
-  const away = pickDisplayName(seedAway, fx.top_rows);
-
-  return { home, away };
-}
-
-// =====================================================
-// ✅ POSIÇÃO ATUAL (panels.csv)
-// =====================================================
-function currentPosFromPanels(panelsRows: Row[] | undefined): { home_pos: number | null; away_pos: number | null } {
-  if (!panelsRows?.length) return { home_pos: null, away_pos: null };
-
-  const homeRow = panelsRows.find((r) => String(r["side"] || "").toUpperCase() === "HOME");
-  const awayRow = panelsRows.find((r) => String(r["side"] || "").toUpperCase() === "AWAY");
-
-  const home_pos = homeRow ? tryInt(String(homeRow["pos"] ?? "")) : null;
-  const away_pos = awayRow ? tryInt(String(awayRow["pos"] ?? "")) : null;
-
-  return { home_pos, away_pos };
-}
-
-// =====================================================
-// ✅ URL <-> filtros
-//   q = busca
-//   l = leagues ON (CSV list)
-//   g = games selected (baseKey list)
-// =====================================================
 function parseCsvListParam(v: string | null): string[] {
   if (!v) return [];
   return v
@@ -419,199 +186,211 @@ function emptyBoolMap(keys: string[]): Record<string, boolean> {
   return m;
 }
 
-// =====================================================
-// Home
-// =====================================================
-const Home: React.FC = () => {
+function timeFromUtcDate(utc: string): string {
+  // handles: "2026-02-10T20:00:00Z" or with offset
+  if (!utc) return "";
+  const s = String(utc).trim();
+  const m = s.match(/T(\d{2}):(\d{2})/);
+  if (!m) return "";
+  return `${m[1]}:${m[2]}`;
+}
+
+type GameUI = {
+  key: string;
+  league: LeagueKey;
+
+  fixture_id: string;
+  competition: string;
+  matchday: string;
+
+  utcDate: string;
+  dateBr: string;
+  timeHHMM: string;
+
+  homeName: string;
+  awayName: string;
+
+  homePos: number | null;
+  awayPos: number | null;
+
+  homePts: number | null;
+  awayPts: number | null;
+};
+
+// ----------------------------------------------------
+// UI bits
+// ----------------------------------------------------
+function Pill({ children, cls }: { children: React.ReactNode; cls?: string }) {
+  return (
+    <span className={["rounded-full border px-3 py-1 text-[11px] font-black", cls || "border-white/10 bg-white/5"].join(" ")}>
+      {children}
+    </span>
+  );
+}
+
+function BigTag({
+  label,
+  tone,
+  sub,
+}: {
+  label: string;
+  tone: "home" | "away";
+  sub?: React.ReactNode;
+}) {
+  const cls =
+    tone === "home"
+      ? "border-blue-400/35 bg-[linear-gradient(180deg,rgba(59,130,246,0.32),rgba(59,130,246,0.12))] text-blue-100"
+      : "border-red-400/35 bg-[linear-gradient(180deg,rgba(239,68,68,0.32),rgba(239,68,68,0.12))] text-red-100";
+
+  return (
+    <div className={["inline-flex flex-col rounded-2xl border px-3 py-2", cls].join(" ")}>
+      <div className="text-[11px] font-black tracking-wide">{label}</div>
+      {sub && <div className="mt-0.5 text-[10px] font-bold opacity-80">{sub}</div>}
+    </div>
+  );
+}
+
+function PosPill({ pos, tone }: { pos: number | null; tone: "home" | "away" }) {
+  if (pos == null) return <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] font-black opacity-70">—</span>;
+  const cls =
+    tone === "home"
+      ? "border-blue-400/30 bg-blue-500/15 text-blue-200"
+      : "border-red-400/30 bg-red-500/15 text-red-200";
+  return <span className={["rounded-full border px-2 py-1 text-[10px] font-black tabular-nums", cls].join(" ")}>#{pos}</span>;
+}
+
+function PtsPill({ pts, tone }: { pts: number | null; tone: "home" | "away" }) {
+  if (pts == null) return <span className="rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] font-black opacity-70">— pts</span>;
+  const cls =
+    tone === "home"
+      ? "border-blue-400/20 bg-blue-500/10 text-blue-100"
+      : "border-red-400/20 bg-red-500/10 text-red-100";
+  return <span className={["rounded-full border px-2 py-1 text-[10px] font-black tabular-nums", cls].join(" ")}>{pts} pts</span>;
+}
+
+// ----------------------------------------------------
+// Page
+// ----------------------------------------------------
+export default function Home() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [fixtures, setFixtures] = useState<FxUI[]>([]);
+  const [games, setGames] = useState<GameUI[]>([]);
+  const [leagueOn, setLeagueOn] = useState<Record<string, boolean>>({});
   const [visible, setVisible] = useState<Record<string, boolean>>({});
   const [q, setQ] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [leagueOn, setLeagueOn] = useState<Record<string, boolean>>({});
-  const [filtersOpen, setFiltersOpen] = useState(false);
-
-  // ✅ evita loop de hydration -> URL sync
   const hydratedRef = useRef(false);
 
   useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        setErr(null);
+    try {
+      setLoading(true);
+      setErr(null);
 
-        const pairs = buildPairsFromGlob(CSV_RAW);
-        if (!pairs.length) throw new Error("Não encontrei CSVs em src/rodada_csvs/. Confere o caminho e nomes.");
+      const paths = Object.keys(PANELS_RAW);
+      if (!paths.length) throw new Error("Não encontrei __panels.csv em src/rodada_csvs/.");
 
-        const out: FxUI[] = [];
+      const out: GameUI[] = [];
 
-        for (const pair of pairs) {
-          const topRaw = CSV_RAW[pair.topPath];
-          const topRows = parseCsv(topRaw);
+      for (const p of paths) {
+        const file = p.split("/").pop() || p;
+        const league = leagueFromFilename(file);
+        const key = keyFromPanelFilename(p);
 
-          let panelsRows: Row[] | undefined;
-          if (pair.panelsPath && CSV_RAW[pair.panelsPath]) panelsRows = parseCsv(CSV_RAW[pair.panelsPath]);
+        const rows = parseCsv(PANELS_RAW[p]) as Row[];
+        const panelAny = (rows?.[0] || ({} as Row)) as Row;
 
-          const fx0 = buildFixtureStats(topRows, panelsRows, pair.baseKey) as FixtureStats & { baseKey?: string };
-          const fx = { ...fx0, baseKey: pair.baseKey };
+        const homeRow = rows.find((r) => String(r["side"] || "").toUpperCase() === "HOME");
+        const awayRow = rows.find((r) => String(r["side"] || "").toUpperCase() === "AWAY");
 
-          const canon = resolveCanonicalNames(fx);
+        const fixture_id = String(panelAny["fixture_id"] || "").trim() || key;
+        const competition = String(panelAny["competition"] || "").trim();
+        const matchday = String(panelAny["matchday_fixture"] || panelAny["matchday"] || "").trim();
 
-          const { home_pos: homePosNow, away_pos: awayPosNow } = currentPosFromPanels(panelsRows);
+        const utcDate = String(panelAny["utcDate_fixture"] || panelAny["utcDate"] || "").trim();
+        const dateBr = utcDate ? fmtDateBrOnly(utcDate) : "";
+        const timeHHMM = utcDate ? timeFromUtcDate(utcDate) : "";
 
-          const home_pos = homePosNow ?? estimatePosRobust(fx.top_rows, canon.home);
-          const away_pos = awayPosNow ?? estimatePosRobust(fx.top_rows, canon.away);
+        const homeName = String(homeRow?.["team_name"] || "").trim();
+        const awayName = String(awayRow?.["team_name"] || "").trim();
 
-          out.push({
-            ...(fx as FixtureStats),
-            league: pair.league,
-            baseKey: pair.baseKey,
-            display_home: canon.home,
-            display_away: canon.away,
-            home_pos,
-            away_pos,
-          });
-        }
+        const homePos = homeRow ? tryInt(homeRow["pos"]) : null;
+        const awayPos = awayRow ? tryInt(awayRow["pos"]) : null;
 
-        out.sort((a, b) => {
-          const ad = a.meta.utcDate_fixture || "";
-          const bd = b.meta.utcDate_fixture || "";
-          const amd = tryInt(a.meta.matchday_fixture) ?? 1e9;
-          const bmd = tryInt(b.meta.matchday_fixture) ?? 1e9;
-          return (
-            ad.localeCompare(bd) ||
-            amd - bmd ||
-            (a.meta.competition || "").localeCompare(b.meta.competition || "") ||
-            a.display_home.localeCompare(b.display_home)
-          );
+        const homePts = homeRow ? tryInt(homeRow["pts"]) : null;
+        const awayPts = awayRow ? tryInt(awayRow["pts"]) : null;
+
+        out.push({
+          key,
+          league,
+          fixture_id,
+          competition,
+          matchday,
+          utcDate,
+          dateBr,
+          timeHHMM,
+          homeName,
+          awayName,
+          homePos,
+          awayPos,
+          homePts,
+          awayPts,
         });
-
-        // ✅ keys disponíveis (pra inicializar maps)
-        const leaguesPresent = Array.from(new Set(out.map((f) => f.league)));
-
-        // ✅ HYDRATE a partir da URL (se houver). Se não houver, inicia TUDO OFF.
-        const qUrl = (searchParams.get("q") || "").trim();
-        const lUrl = parseCsvListParam(searchParams.get("l"));
-        const gUrl = parseCsvListParam(searchParams.get("g"));
-
-        const lmap: Record<string, boolean> = emptyBoolMap(leaguesPresent);
-        const vis: Record<string, boolean> = {};
-
-        // 🔸 leagues ON vindos da URL
-        for (const lk of lUrl) lmap[lk] = true;
-
-        // 🔸 games ON vindos da URL (por baseKey)
-        const selectedSet = new Set(gUrl);
-        for (const fx of out) {
-          vis[fx.baseKey] = selectedSet.has(fx.baseKey);
-        }
-
-        // ✅ se não tem nada na URL: inicia tudo OFF mesmo
-        if (!lUrl.length && !gUrl.length && !qUrl) {
-          for (const lk of leaguesPresent) lmap[lk] = false;
-          for (const fx of out) vis[fx.baseKey] = false;
-        }
-
-        setFixtures(out);
-        setLeagueOn(lmap);
-        setVisible(vis);
-        setQ(qUrl);
-
-        hydratedRef.current = true;
-      } catch (e: any) {
-        setErr(e?.message || "Erro desconhecido");
-      } finally {
-        setLoading(false);
       }
-    })();
+
+      out.sort((a, b) => {
+        const ad = a.utcDate || "";
+        const bd = b.utcDate || "";
+        const amd = tryInt(a.matchday) ?? 1e9;
+        const bmd = tryInt(b.matchday) ?? 1e9;
+        return ad.localeCompare(bd) || amd - bmd || a.homeName.localeCompare(b.homeName);
+      });
+
+      const leaguesPresent = Array.from(new Set(out.map((g) => g.league)));
+
+      // URL hydrate
+      const qUrl = (searchParams.get("q") || "").trim();
+      const lUrl = parseCsvListParam(searchParams.get("l"));
+      const gUrl = parseCsvListParam(searchParams.get("g"));
+
+      const lmap: Record<string, boolean> = emptyBoolMap(leaguesPresent);
+      const vis: Record<string, boolean> = {};
+
+      for (const lk of lUrl) lmap[lk] = true;
+
+      const selectedSet = new Set(gUrl);
+      for (const g of out) vis[g.key] = selectedSet.has(g.key);
+
+      // default: se URL vazia, liga tudo ON e jogo sem seleção (mostra todos)
+      if (!lUrl.length && !gUrl.length && !qUrl) {
+        for (const lk of leaguesPresent) lmap[lk] = true;
+        for (const g of out) vis[g.key] = true;
+      }
+
+      setGames(out);
+      setLeagueOn(lmap);
+      setVisible(vis);
+      setQ(qUrl);
+
+      hydratedRef.current = true;
+    } catch (e: any) {
+      setErr(e?.message || "Erro desconhecido");
+    } finally {
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const leagueKeys = useMemo(() => {
-    const ks = Array.from(new Set(fixtures.map((f) => f.league)));
+    const ks = Array.from(new Set(games.map((g) => g.league)));
     const order: LeagueKey[] = ["PL", "PD", "SA", "BL1", "FL1", "DED", "PPL", "CL", "EL", "ECL", "BSA", "BR2", "OTHER"];
     ks.sort((a, b) => order.indexOf(a as LeagueKey) - order.indexOf(b as LeagueKey));
     return ks as LeagueKey[];
-  }, [fixtures]);
-
-  // ✅ lista de jogos para o drawer/sidebar (respeita league + busca)
-  const filtered = useMemo(() => {
-    const qq = normTeam(q.trim());
-    return fixtures.filter((fx) => {
-      if (leagueOn[fx.league] === false) return false;
-      if (!qq) return true;
-      const t = normTeam(`${fx.display_home} ${fx.display_away} ${fx.meta.competition} ${fx.league}`);
-      return t.includes(qq);
-    });
-  }, [fixtures, q, leagueOn]);
-
-  // ✅ sincroniza filtros -> URL (depois de hidratado)
-  useEffect(() => {
-    if (!hydratedRef.current) return;
-
-    const leaguesOnNow = leagueKeys.filter((k) => leagueOn[k] === true);
-    const gamesOnNow = fixtures.filter((fx) => visible[fx.baseKey] === true).map((fx) => fx.baseKey);
-
-    const next: Record<string, string> = {};
-
-    const qTrim = q.trim();
-    if (qTrim) next.q = qTrim;
-
-    const l = toCsvListParam(leaguesOnNow);
-    if (l) next.l = l;
-
-    const g = toCsvListParam(gamesOnNow);
-    if (g) next.g = g;
-
-    // ✅ evita re-render extra: só atualiza se mudou
-    const cur = searchParams.toString();
-    const nxt = new URLSearchParams(next).toString();
-    if (cur !== nxt) setSearchParams(next, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, leagueOn, visible, fixtures, leagueKeys]);
-
-  const toggleLeague = (k: LeagueKey) => setLeagueOn((m) => ({ ...m, [k]: !(m[k] ?? false) }));
-
-  const toggleGame = (baseKey: string, on: boolean) => setVisible((v) => ({ ...v, [baseKey]: on }));
-
-  const clearFilters = () => {
-    // limpa tudo + URL
-    setQ("");
-    setLeagueOn((prev) => emptyBoolMap(Object.keys(prev)));
-    setVisible((prev) => emptyBoolMap(Object.keys(prev)));
-    setSearchParams({}, { replace: true });
-  };
-
-  const openFixture = (fx: FxUI) => {
-    const id = (fx?.meta?.fixture_id || `${fx.baseKey}`).toString();
-    navigate(`/fixture/${encodeURIComponent(id)}`);
-  };
-
-  useEffect(() => {
-  if (!filtersOpen) return;
-
-  const html = document.documentElement;
-  const body = document.body;
-
-  // salva estado atual
-  const prevOverflow = body.style.overflow;
-  const prevPaddingRight = body.style.paddingRight;
-
-  // evita "pular" layout quando some scrollbar (desktop/tablet)
-  const scrollbarW = window.innerWidth - html.clientWidth;
-  body.style.overflow = "hidden";
-  if (scrollbarW > 0) body.style.paddingRight = `${scrollbarW}px`;
-
-  return () => {
-    body.style.overflow = prevOverflow;
-    body.style.paddingRight = prevPaddingRight;
-  };
-}, [filtersOpen]);
-
+  }, [games]);
 
   const anySelection = useMemo(() => {
     const lOn = Object.values(leagueOn).some(Boolean);
@@ -620,564 +399,293 @@ const Home: React.FC = () => {
     return lOn || gOn || hasQ;
   }, [leagueOn, visible, q]);
 
+  const filteredList = useMemo(() => {
+    const qq = q.trim().toLowerCase();
+    return games.filter((g) => {
+      if ((leagueOn[g.league] ?? false) === false) return false;
+      if ((visible[g.key] ?? false) === false) return false;
+      if (!qq) return true;
+      const t = `${g.homeName} ${g.awayName} ${g.competition} ${g.league}`.toLowerCase();
+      return t.includes(qq);
+    });
+  }, [games, leagueOn, visible, q]);
+
+  // sync -> URL
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+
+    const leaguesOnNow = leagueKeys.filter((k) => leagueOn[k] === true);
+    const gamesOnNow = games.filter((g) => visible[g.key] === true).map((g) => g.key);
+
+    const next: Record<string, string> = {};
+    const qTrim = q.trim();
+    if (qTrim) next.q = qTrim;
+
+    const l = toCsvListParam(leaguesOnNow);
+    if (l) next.l = l;
+
+    const gg = toCsvListParam(gamesOnNow);
+    if (gg) next.g = gg;
+
+    const cur = searchParams.toString();
+    const nxt = new URLSearchParams(next).toString();
+    if (cur !== nxt) setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, leagueOn, visible, games, leagueKeys]);
+
+  const toggleLeague = (k: LeagueKey) => setLeagueOn((m) => ({ ...m, [k]: !(m[k] ?? false) }));
+  const toggleGame = (key: string, on: boolean) => setVisible((v) => ({ ...v, [key]: on }));
+
+  const setAllGames = (on: boolean) => {
+    setVisible((prev) => {
+      const out: Record<string, boolean> = {};
+      for (const k of Object.keys(prev)) out[k] = on;
+      return out;
+    });
+  };
+
+  const clearFilters = () => {
+    setQ("");
+    // keep leagues ON by default, games ON by default
+    setLeagueOn((prev) => {
+      const out: Record<string, boolean> = {};
+      for (const k of Object.keys(prev)) out[k] = true;
+      return out;
+    });
+    setAllGames(true);
+    setSearchParams({}, { replace: true });
+  };
+
+  // mobile drawer scroll-lock
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevOverflow = body.style.overflow;
+    const prevPaddingRight = body.style.paddingRight;
+
+    const scrollbarW = window.innerWidth - html.clientWidth;
+    body.style.overflow = "hidden";
+    if (scrollbarW > 0) body.style.paddingRight = `${scrollbarW}px`;
+
+    return () => {
+      body.style.overflow = prevOverflow;
+      body.style.paddingRight = prevPaddingRight;
+    };
+  }, [filtersOpen]);
+
+  const openFixture = (id: string) => navigate(`/fixture/${encodeURIComponent(String(id))}`);
+
   return (
     <div className="min-h-screen flex flex-col bg-zinc-900 text-zinc-100">
       <main className="flex-1">
-        <div className="mx-auto max-w-[1700px] p-3 md:p-4">
-          {/* Mobile top bar */}
-          <div className="sticky top-0 z-30 mb-3 rounded-2xl border border-white/10 bg-zinc-950/75 backdrop-blur px-3 py-3 md:hidden">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-black">Painel da Rodada 🎯</div>
-              <div className="flex gap-2">
+        <div className="mx-auto max-w-[1500px] p-3 md:p-4">
+          {/* TOP header */}
+          <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.35))] p-4 shadow-2xl">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="text-sm font-black">Agenda de jogos ⚽</div>
+                <div className="mt-1 text-xs opacity-70">Somente informações do jogo (casa/fora, posição, pontos, data e hora).</div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 justify-end">
                 <button
                   onClick={() => setFiltersOpen(true)}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold"
+                  className="md:hidden rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black hover:bg-white/10"
                 >
                   Filtros
                 </button>
-
                 <button
                   onClick={clearFilters}
-                  disabled={!anySelection}
-                  className={[
-                    "rounded-xl border px-3 py-2 text-xs font-black",
-                    anySelection ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-white/5 bg-white/5 opacity-40 cursor-not-allowed",
-                  ].join(" ")}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black hover:bg-white/10"
                 >
-                  Clear ✖
+                  Reset
                 </button>
               </div>
             </div>
 
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="filtrar jogos..."
-              className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none"
-            />
-          </div>
+            {/* search */}
+            <div className="mt-3">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="buscar time / liga…"
+                className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm outline-none focus:border-white/20"
+              />
+            </div>
 
-         {/* Mobile drawer */}
-{filtersOpen && (
-  <div className="fixed inset-0 z-40 md:hidden">
-    <div className="absolute inset-0 bg-black/60" onClick={() => setFiltersOpen(false)} />
-
-    <div className="absolute right-0 top-0 h-full w-[88%] max-w-[420px] border-l border-white/10 bg-zinc-950 p-4">
-      {/* ✅ estrutura em coluna pra ter área rolável real */}
-      <div className="flex h-full flex-col">
-        {/* header fixo */}
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-black">Filtros</div>
-          <div className="flex gap-2">
-            <button
-              onClick={clearFilters}
-              disabled={!anySelection}
-              className={[
-                "rounded-xl border px-3 py-2 text-xs font-black",
-                anySelection
-                  ? "border-white/10 bg-white/5 hover:bg-white/10"
-                  : "border-white/5 bg-white/5 opacity-40 cursor-not-allowed",
-              ].join(" ")}
-            >
-              Clear ✖
-            </button>
-
-            <button
-              onClick={() => setFiltersOpen(false)}
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold"
-            >
-              Fechar
-            </button>
-          </div>
-        </div>
-
-        {/* ✅ tudo que deve rolar fica aqui */}
-        <div className="mt-4 flex-1 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
-          {/* Campeonatos */}
-          <div>
-            <div className="text-xs font-bold uppercase tracking-wide opacity-80">Campeonatos</div>
-            <div className="mt-3 flex flex-col gap-2">
+            {/* league pills */}
+            <div className="mt-3 flex flex-wrap gap-2">
               {leagueKeys.map((k) => (
-                <button
-                  key={k}
-                  onClick={() => toggleLeague(k)}
-                  className={[
-                    "flex items-center justify-between rounded-xl border px-3 py-2 text-sm",
-                    leagueOn[k] ?? false ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
-                  ].join(" ")}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(k)].join(" ")} />
-                    <span className="font-bold">{leagueLabel(k)}</span>
-                  </div>
-                  <span className="text-xs font-black">{leagueOn[k] ?? false ? "ON" : "OFF"}</span>
+                <button key={k} onClick={() => toggleLeague(k)} className={leaguePillClass(k, leagueOn[k] ?? false)}>
+                  <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(k)].join(" ")} />
+                  {leagueLabel(k)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Jogos */}
-          <div className="mt-5">
-            <div className="text-xs font-bold uppercase tracking-wide opacity-80">Jogos</div>
-
-            <div className="mt-3 flex flex-col gap-2">
-              {filtered.map((fx) => {
-                const title = `${fx.display_home} × ${fx.display_away}`.trim();
-                return (
-                  <label
-                    key={fx.baseKey}
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs"
+          {/* Mobile drawer */}
+          {filtersOpen && (
+            <div className="fixed inset-0 z-40 md:hidden">
+              <div className="absolute inset-0 bg-black/60" onClick={() => setFiltersOpen(false)} />
+              <div className="absolute right-0 top-0 h-full w-[88%] max-w-[440px] border-l border-white/10 bg-zinc-950 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-black">Filtros</div>
+                  <button
+                    onClick={() => setFiltersOpen(false)}
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black hover:bg-white/10"
                   >
-                    <input
-                      type="checkbox"
-                      checked={visible[fx.baseKey] ?? false}
-                      onChange={(e) => toggleGame(fx.baseKey, e.target.checked)}
-                      className="scale-110"
-                    />
-                    <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(fx.league)].join(" ")} />
-                    <span className="opacity-90">{title}</span>
-                  </label>
-                );
-              })}
+                    Fechar
+                  </button>
+                </div>
 
-              {!filtered.length && (
-                <div className="text-xs opacity-70">Nenhum jogo encontrado (ative ligas primeiro).</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-          <div className="grid gap-3 md:grid-cols-[380px_1fr] md:gap-4">
-            {/* Desktop sidebar */}
-            <aside className="hidden md:sticky md:top-4 md:block md:h-[calc(100vh-2rem)] md:overflow-auto rounded-2xl border border-white/10 bg-gradient-to-b from-white/10 to-black/20 p-4 shadow-2xl">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-sm font-black">Painel da Rodada 🎯</div>
-                <button
-                  onClick={clearFilters}
-                  disabled={!anySelection}
-                  className={[
-                    "rounded-xl border px-3 py-2 text-xs font-black",
-                    anySelection ? "border-white/10 bg-white/5 hover:bg-white/10" : "border-white/5 bg-white/5 opacity-40 cursor-not-allowed",
-                  ].join(" ")}
-                >
-                  Clear ✖
-                </button>
-              </div>
-
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="filtrar jogos..."
-                className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none"
-              />
-
-              <div className="mt-4">
-                <div className="text-xs font-bold uppercase tracking-wide opacity-80">Campeonatos</div>
-                <div className="mt-3 grid grid-cols-1 gap-2">
-                  {leagueKeys.map((k) => (
+                <div className="mt-4">
+                  <div className="text-xs font-bold uppercase tracking-wide opacity-80">Mostrar jogos</div>
+                  <div className="mt-2 flex gap-2">
                     <button
-                      key={k}
-                      onClick={() => toggleLeague(k)}
-                      className={[
-                        "flex items-center justify-between rounded-xl border px-3 py-2 text-sm",
-                        leagueOn[k] ?? false ? leaguePillClass(k) : "border-white/10 bg-white/5 text-zinc-200 opacity-80",
-                      ].join(" ")}
+                      onClick={() => setAllGames(true)}
+                      className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black hover:bg-white/10"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(k)].join(" ")} />
-                        <span className="font-bold">{leagueLabel(k)}</span>
-                      </div>
-                      <span className="text-xs font-black">{leagueOn[k] ?? false ? "ON" : "OFF"}</span>
+                      Tudo ✅
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-col gap-2">
-                {filtered.map((fx) => {
-                  const title = `${fx.display_home} × ${fx.display_away}`.trim();
-                  return (
-                    <label key={fx.baseKey} className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs">
-                      <input
-                        type="checkbox"
-                        checked={visible[fx.baseKey] ?? false}
-                        onChange={(e) => toggleGame(fx.baseKey, e.target.checked)}
-                        className="scale-110"
-                      />
-                      <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(fx.league)].join(" ")} />
-                      <span className="opacity-90">{title}</span>
-                    </label>
-                  );
-                })}
-                {!filtered.length && <div className="text-xs opacity-70">Nenhum jogo encontrado (ative ligas primeiro).</div>}
-              </div>
-            </aside>
-
-            {/* Content */}
-            <section className="flex flex-col gap-3 md:gap-4 ">
-              {loading && <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm opacity-90">Carregando CSVs…</div>}
-              {err && (
-                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm">
-                  Erro: {err}
-                </div>
-              )}
-
-              {fixtures.map((fx, idx) => {
-                // ✅ agora: liga precisa estar ON E o jogo precisa estar selecionado
-                if ((leagueOn[fx.league] ?? false) === false) return null;
-                if (!(visible[fx.baseKey] ?? false)) return null;
-
-                const qq = normTeam(q.trim());
-                if (qq) {
-                  const t = normTeam(`${fx.display_home} ${fx.display_away} ${fx.meta.competition} ${fx.league}`);
-                  if (!t.includes(qq)) return null;
-                }
-
-                const homeName = fx.display_home;
-                const awayName = fx.display_away;
-
-                const dtPretty = fmtDateTimeBrPretty(fx.meta.utcDate_fixture);
-
-                const n = fx.w.length;
-
-                const casa_gf_w = wmean(fx.casa_gf, fx.w);
-                const casa_ga_w = wmean(fx.casa_ga, fx.w);
-                const vis_gf_w = wmean(fx.vis_gf, fx.w);
-                const vis_ga_w = wmean(fx.vis_ga, fx.w);
-
-                const casa_gf_m = mean(fx.casa_gf);
-                const casa_ga_m = mean(fx.casa_ga);
-
-                const casa_cv_total = mean2(wcvPercent(fx.casa_gf, fx.w), wcvPercent(fx.casa_ga, fx.w));
-                const vis_cv_total = mean2(wcvPercent(fx.vis_gf, fx.w), wcvPercent(fx.vis_ga, fx.w));
-                const cv_jogo = mean2(casa_cv_total, vis_cv_total);
-
-                const confiab = confiabilidadeFromCv(cv_jogo);
-                const { label: confiabLabel, cls: confiabCls } = confiabBucket(confiab);
-
-                const pred_mand = casa_gf_w != null && vis_ga_w != null ? (casa_gf_w + vis_ga_w) / 2 : null;
-                const pred_vis = vis_gf_w != null && casa_ga_w != null ? (vis_gf_w + casa_ga_w) / 2 : null;
-                const total_prev = pred_mand != null && pred_vis != null ? pred_mand + pred_vis : null;
-
-                const home_pos = fx.home_pos;
-                const away_pos = fx.away_pos;
-
-                return (
-                  <div
-                    key={`${fx.baseKey}-${idx}`}
-                    className=" my-5 rounded-2xl border border-white/10 bg-[radial-gradient(1200px_240px_at_12%_0%,rgba(47,125,255,0.10),transparent_60%),radial-gradient(900px_220px_at_88%_0%,rgba(255,59,59,0.08),transparent_58%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.30))] p-3 sm:p-4 shadow-2xl"
-                  >
-                    {/* header */}
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(fx.league)].join(" ")} />
-                          <span className={["rounded-full border px-2.5 py-1 text-[11px] font-black", leaguePillClass(fx.league)].join(" ")}>
-                            {leagueLabel(fx.league)}
-                          </span>
-                        </div>
-
-                        <div className="mt-2 text-lg font-black leading-tight">
-                          {homeName} × {awayName}
-                        </div>
-
-                        <div className="mt-1 text-xs opacity-75">
-                          MD {fx.meta.matchday_fixture} • {dtPretty}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 sm:justify-end">
-                        <div className="self-start rounded-full border border-white/10 bg-black/25 px-2.5 py-1 text-[11px] sm:text-xs">
-                          Amostras do TOP: <b>{n}</b>
-                        </div>
-
-                        {/* ✅ Botão por jogo */}
-                        <button
-                          onClick={() => openFixture(fx)}
-                          className="self-start rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] sm:text-xs font-black hover:bg-white/10"
-                        >
-                          Abrir jogo ↗
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* master */}
-                    <div className="mt-3 rounded-2xl border border-white/10 bg-gradient-to-b from-white/10 to-black/20 p-3 sm:p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="text-[11px] font-bold uppercase tracking-wide opacity-85">Placar Previsto ✨</div>
-
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="opacity-80">Confiabilidade</span>
-                          <span
-                            className={[
-                              "rounded-full border px-3 py-1 font-black",
-                              confiabCls === "conf-bom" && "border-emerald-400/30 bg-emerald-400/15",
-                              confiabCls === "conf-medio" && "border-yellow-300/30 bg-yellow-300/15",
-                              confiabCls === "conf-ruim" && "border-red-400/30 bg-red-400/15",
-                              confiabCls === "conf-na" && "border-white/10 bg-white/5 opacity-80",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                          >
-                            {confiabLabel}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-3">
-                        {/* Names row */}
-                        <div className="grid grid-cols-2 gap-3 items-start">
-                          {/* HOME */}
-                          <div className="text-left min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[11px] opacity-70">Casa</span>
-                              {home_pos != null && <PosBadge pos={home_pos} />}
-                            </div>
-                            <div className="mt-1 font-black leading-snug whitespace-normal break-words text-sm sm:text-base">
-                              {homeName}
-                            </div>
-                          </div>
-
-                          {/* AWAY */}
-                          <div className="text-right min-w-0">
-                            <div className="flex items-center justify-end gap-2">
-                              {away_pos != null && <PosBadge pos={away_pos} />}
-                              <span className="text-[11px] opacity-70">Fora</span>
-                            </div>
-                            <div className="mt-1 font-black leading-snug whitespace-normal break-words text-sm sm:text-base">
-                              {awayName}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Score row */}
-                        <div className="mt-3 flex flex-col items-center justify-center">
-                          <div className="flex items-baseline justify-center gap-2 tabular-nums">
-                            <span className="text-2xl sm:text-3xl font-black">{fmtNum(pred_mand, 2)}</span>
-                            <span className="text-base sm:text-lg font-black opacity-80">×</span>
-                            <span className="text-2xl sm:text-3xl font-black">{fmtNum(pred_vis, 2)}</span>
-                          </div>
-                          <div className="mt-1 text-[11px] opacity-70 text-center">
-                            Total: <b>{fmtNum(total_prev, 2)}</b>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* médias */}
-                    <div className="mt-3 rounded-2xl border border-white/10 border-dashed bg-black/25 p-3 sm:p-4">
-                      <div className="text-[11px] font-bold uppercase tracking-wide opacity-85">Média Simples</div>
-
-                      <div className="mt-3 grid gap-3 md:grid-cols-1">
-                        <StatBox title="Média Simples" gf={fmtNum(casa_gf_m, 2)} ga={fmtNum(casa_ga_m, 2)} />
-                      </div>
-                    </div>
-
-                    {/* TOP-12 (mobile cards + desktop table) */}
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-sm opacity-90">Ver TOP-12 usado (históricos)</summary>
-
-                      <div className="mt-3 ">
-                        {/* ✅ MOBILE: cards */}
-                        <div className="flex flex-col gap-2 md:hidden">
-                          {fx.top_rows.slice(0, 12).map((r: Record<string, string>, i: number) => {
-                            const dtPrev = fmtDateBrOnly(r["utcDate_prev"] || "");
-                            const homePrev = r["home_prev"] || "";
-                            const awayPrev = r["away_prev"] || "";
-                            const scorePrev = r["score_fulltime_prev"] || "";
-
-                            const target = r["target_team"] || "";
-                            const opp = r["opponent"] || "";
-                            const tp = tryInt(r["target_pos_then"]);
-                            const op = tryInt(r["opponent_pos_then"]);
-
-                            let homePosThen: number | null = null;
-                            let awayPosThen: number | null = null;
-
-                            const nTarget = normTeam(target);
-                            const nOpp = normTeam(opp);
-                            const nHomePrev = normTeam(homePrev);
-                            const nAwayPrev = normTeam(awayPrev);
-
-                            if (nTarget === nHomePrev) {
-                              homePosThen = tp;
-                              awayPosThen = op;
-                            } else if (nTarget === nAwayPrev) {
-                              homePosThen = op;
-                              awayPosThen = tp;
-                            } else {
-                              if (nOpp === nHomePrev) {
-                                homePosThen = op;
-                                awayPosThen = tp;
-                              } else if (nOpp === nAwayPrev) {
-                                homePosThen = tp;
-                                awayPosThen = op;
-                              }
-                            }
-
-                            return (
-                              <div key={i} className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                                <div className="flex items-center justify-between gap-3">
-                                  <div className="text-xs opacity-80">
-                                    <span className="font-black">#{r["rank"] || i + 1}</span>
-                                    <span className="mx-2 opacity-40">•</span>
-                                    <span className="whitespace-nowrap">{dtPrev}</span>
-                                  </div>
-                                  <div className="tabular-nums font-black text-sm">{scorePrev}</div>
-                                </div>
-
-                                <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <span className="whitespace-normal break-words font-bold">{homePrev}</span>
-                                      {homePosThen != null && <PosBadge small pos={homePosThen} />}
-                                    </div>
-                                  </div>
-
-                                  <div className="text-xs font-black opacity-60">×</div>
-
-                                  <div className="min-w-0 text-right">
-                                    <div className="flex items-center justify-end gap-2 min-w-0">
-                                      {awayPosThen != null && <PosBadge small pos={awayPosThen} />}
-                                      <span className="whitespace-normal break-words font-bold">{awayPrev}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-
-                          {!fx.top_rows.length && (
-                            <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-center text-xs opacity-70">
-                              Sem linhas no TOP.
-                            </div>
-                          )}
-                        </div>
-
-                        {/* ✅ DESKTOP: tabela */}
-                        <div className="hidden md:block overflow-auto rounded-2xl border border-white/10 bg-black/20">
-                          <table className="min-w-[760px] w-full text-xs">
-                            <thead className="sticky top-0 bg-zinc-950/90 backdrop-blur border-b border-white/10">
-                              <tr>
-                                <th className="p-3 text-right">#</th>
-                                <th className="p-3 whitespace-nowrap">Data</th>
-                                <th className="p-3">Mandante</th>
-                                <th className="p-3">Visitante</th>
-                                <th className="p-3 text-right">Placar</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {fx.top_rows.slice(0, 12).map((r: Record<string, string>, i: number) => {
-                                const dtPrev = fmtDateBrOnly(r["utcDate_prev"] || "");
-                                const homePrev = r["home_prev"] || "";
-                                const awayPrev = r["away_prev"] || "";
-                                const scorePrev = r["score_fulltime_prev"] || "";
-
-                                const target = r["target_team"] || "";
-                                const opp = r["opponent"] || "";
-                                const tp = tryInt(r["target_pos_then"]);
-                                const op = tryInt(r["opponent_pos_then"]);
-
-                                let homePosThen: number | null = null;
-                                let awayPosThen: number | null = null;
-
-                                const nTarget = normTeam(target);
-                                const nOpp = normTeam(opp);
-                                const nHomePrev = normTeam(homePrev);
-                                const nAwayPrev = normTeam(awayPrev);
-
-                                if (nTarget === nHomePrev) {
-                                  homePosThen = tp;
-                                  awayPosThen = op;
-                                } else if (nTarget === nAwayPrev) {
-                                  homePosThen = op;
-                                  awayPosThen = tp;
-                                } else {
-                                  if (nOpp === nHomePrev) {
-                                    homePosThen = op;
-                                    awayPosThen = tp;
-                                  } else if (nOpp === nAwayPrev) {
-                                    homePosThen = tp;
-                                    awayPosThen = op;
-                                  }
-                                }
-
-                                return (
-                                  <tr key={i} className="border-b border-white/5">
-                                    <td className="p-3 text-right tabular-nums opacity-85">{r["rank"] || i + 1}</td>
-                                    <td className="p-3 whitespace-nowrap opacity-85">{dtPrev}</td>
-                                    <td className="p-3">
-                                      {homePrev} {homePosThen != null && <PosBadge small pos={homePosThen} />}
-                                    </td>
-                                    <td className="p-3">
-                                      {awayPrev} {awayPosThen != null && <PosBadge small pos={awayPosThen} />}
-                                    </td>
-                                    <td className="p-3 text-right tabular-nums font-black">{scorePrev}</td>
-                                  </tr>
-                                );
-                              })}
-
-                              {!fx.top_rows.length && (
-                                <tr>
-                                  <td colSpan={5} className="p-4 text-center text-xs opacity-70">
-                                    Sem linhas no TOP.
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </details>
+                    <button
+                      onClick={() => setAllGames(false)}
+                      className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black hover:bg-white/10"
+                    >
+                      Nada ⛔
+                    </button>
                   </div>
-                );
-              })}
-            </section>
+                </div>
+
+                <div className="mt-5 h-[calc(100vh-180px)] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
+                  <div className="text-xs font-bold uppercase tracking-wide opacity-80">Jogos</div>
+                  <div className="mt-2 flex flex-col gap-2">
+                    {games.map((g) => {
+                      const title = `${g.homeName} × ${g.awayName}`.trim();
+                      return (
+                        <label key={g.key} className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs">
+                          <input type="checkbox" checked={visible[g.key] ?? false} onChange={(e) => toggleGame(g.key, e.target.checked)} />
+                          <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(g.league)].join(" ")} />
+                          <span className="opacity-90">{title}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* status */}
+          {loading && (
+            <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm opacity-90">
+              Carregando jogos…
+            </div>
+          )}
+          {err && (
+            <div className="mt-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm">
+              Erro: {err}
+            </div>
+          )}
+
+          {/* GRID */}
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {filteredList.map((g) => {
+              const titleHome = g.homeName || "—";
+              const titleAway = g.awayName || "—";
+
+              const whenLabel = g.dateBr ? `${g.dateBr}${g.timeHHMM ? ` • ${g.timeHHMM}` : ""}` : "—";
+
+              return (
+                <button
+                  key={g.key}
+                  type="button"
+                  onClick={() => openFixture(g.fixture_id)}
+                  className="text-left rounded-2xl border border-white/10 overflow-hidden shadow-2xl
+                  bg-[radial-gradient(1000px_220px_at_18%_0%,rgba(59,130,246,0.18),transparent_62%),
+                      radial-gradient(900px_220px_at_82%_0%,rgba(239,68,68,0.16),transparent_60%),
+                      linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.32))] hover:border-white/20 transition"
+                >
+                  {/* top meta strip */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-black/25 px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={["h-2.5 w-2.5 rounded-full", leagueDotClass(g.league)].join(" ")} />
+                      <Pill cls="border-white/10 bg-black/20">{leagueLabel(g.league)}</Pill>
+                      {g.matchday && <Pill cls="border-white/10 bg-black/20">MD {g.matchday}</Pill>}
+                      {g.competition && <Pill cls="border-white/10 bg-black/20">{g.competition}</Pill>}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Pill cls="border-white/10 bg-black/20">{whenLabel}</Pill>
+                    </div>
+                  </div>
+
+                  {/* HERO center (centralizado como você queria) */}
+                  <div className="p-4">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="text-[11px] font-bold uppercase tracking-wide opacity-75">Próximo jogo</div>
+
+                      <div className="mt-3 w-full grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+                        {/* HOME */}
+                        <div className="min-w-0 text-left">
+                          <BigTag
+                            tone="home"
+                            label="CASA 🔵"
+                            sub={
+                              <span className="inline-flex items-center gap-2">
+                                <PosPill pos={g.homePos} tone="home" />
+                                <PtsPill pts={g.homePts} tone="home" />
+                              </span>
+                            }
+                          />
+                          <div className="mt-2 text-[16px] sm:text-xl font-black leading-tight break-words">{titleHome}</div>
+                        </div>
+
+                        {/* VS */}
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="rounded-full border border-white/10 bg-black/30 px-3 py-1.5">
+                            <div className="text-xs font-black opacity-80">×</div>
+                          </div>
+
+                          <div className="mt-2 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[10px] font-black opacity-80">
+                            ID {g.fixture_id}
+                          </div>
+                        </div>
+
+                        {/* AWAY */}
+                        <div className="min-w-0 text-right">
+                          <BigTag
+                            tone="away"
+                            label="FORA 🔴"
+                            sub={
+                              <span className="inline-flex items-center justify-end gap-2">
+                                <PtsPill pts={g.awayPts} tone="away" />
+                                <PosPill pos={g.awayPos} tone="away" />
+                              </span>
+                            }
+                          />
+                          <div className="mt-2 text-[16px] sm:text-xl font-black leading-tight break-words">{titleAway}</div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 text-[11px] opacity-70">
+                        Clique para abrir o jogo e ver detalhes completos.
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+
+            {!loading && !err && filteredList.length === 0 && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm opacity-80">
+                Nada pra mostrar com esses filtros. (tenta ativar ligas ou dar Reset)
+              </div>
+            )}
           </div>
         </div>
       </main>
-
-    </div>
-  );
-};
-
-export default Home;
-
-// =====================================================
-// UI helpers
-// =====================================================
-function PosBadge({ pos, small }: { pos: number; small?: boolean }) {
-  return (
-    <span
-      className={[
-        "inline-flex items-center rounded-full border border-white/10 bg-white/5 font-black shadow-lg",
-        small ? "px-2 py-[2px] text-[11px] opacity-90" : "px-2 py-[2px] text-[11px] sm:px-2.5 sm:py-1 sm:text-xs",
-      ].join(" ")}
-    >
-      #{pos}
-    </span>
-  );
-}
-
-function StatBox({ gf, ga }: { title: string; gf: string; ga: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-      <div className="mt-3 flex flex-col items-center justify-center gap-2 border-b border-white/10 pb-3">
-        <div className="flex items-baseline gap-2 font-black tabular-nums justify-center">
-          <span className="text-blue-400">{gf}</span>
-          <span className="opacity-70">/</span>
-          <span className="text-red-400">{ga}</span>
-        </div>
-
-        <div className="text-[11px] opacity-70 text-center">
-          <span className="text-blue-400 font-bold">Gols Casa</span> •{" "}
-          <span className="text-red-400 font-bold">Gols Visitante</span>
-        </div>
-      </div>
     </div>
   );
 }
