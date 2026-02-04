@@ -392,12 +392,6 @@ export default function Home() {
     return ks as LeagueKey[];
   }, [games]);
 
-  const anySelection = useMemo(() => {
-    const lOn = Object.values(leagueOn).some(Boolean);
-    const gOn = Object.values(visible).some(Boolean);
-    const hasQ = !!q.trim();
-    return lOn || gOn || hasQ;
-  }, [leagueOn, visible, q]);
 
   const filteredList = useMemo(() => {
     const qq = q.trim().toLowerCase();
