@@ -1,8 +1,0 @@
-api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
-Athletic Club,athletic,Valencia,valencia,0.5,True,low_score
-Elche CF,elche,Elche,elche,1.0,True,ok
-Girona FC,girona,Girona,girona,1.0,True,ok
-Levante UD,levante ud,Levante,levante,0.97,True,ok
-RCD Mallorca,rcd mallorca,Mallorca,mallorca,0.9667,True,ok
-Real Oviedo,real oviedo,Oviedo,oviedo,0.9545,True,ok
-Sevilla FC,sevilla,Sevilla,sevilla,1.0,True,ok

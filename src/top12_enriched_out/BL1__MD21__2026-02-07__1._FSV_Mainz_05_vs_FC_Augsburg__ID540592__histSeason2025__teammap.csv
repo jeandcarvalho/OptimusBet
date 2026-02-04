@@ -1,8 +1,0 @@
-api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
-1. FC Heidenheim 1846,1 heidenheim 1846,Heidenheim,heidenheim,0.9588,True,ok
-1. FSV Mainz 05,1 fsv mainz 05,Mainz,mainz,0.9357,True,ok
-Borussia Mönchengladbach,borussia monchengladbach,M'gladbach,m gladbach,0.5294,True,low_score
-FC Augsburg,augsburg,Augsburg,augsburg,1.0,True,ok
-RB Leipzig,rb leipzig,RB Leipzig,rb leipzig,1.0,True,ok
-SV Werder Bremen,sv werder bremen,Werder Bremen,werder bremen,0.9813,True,ok
-VfL Wolfsburg,vfl wolfsburg,Wolfsburg,wolfsburg,0.9692,True,ok

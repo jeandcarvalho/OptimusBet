@@ -1,9 +1,0 @@
-api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
-Athletic Club,athletic,Valencia,valencia,0.5,True,low_score
-CA Osasuna,ca osasuna,Osasuna,osasuna,0.97,True,ok
-Getafe CF,getafe,Getafe,getafe,1.0,True,ok
-RCD Espanyol de Barcelona,rcd espanyol barcelona,Barcelona,barcelona,0.9409,True,ok
-Rayo Vallecano de Madrid,rayo vallecano madrid,Vallecano,vallecano,0.9429,True,ok
-Real Betis Balompié,real betis balompie,Betis,betis,0.9263,True,ok
-Real Madrid CF,real madrid,Real Madrid,real madrid,1.0,True,ok
-Villarreal CF,villarreal,Villarreal,villarreal,1.0,True,ok

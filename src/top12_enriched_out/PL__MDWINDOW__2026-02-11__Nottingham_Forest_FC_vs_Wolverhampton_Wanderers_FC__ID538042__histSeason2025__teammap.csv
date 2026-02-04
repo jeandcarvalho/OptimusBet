@@ -1,7 +1,0 @@
-api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
-AFC Bournemouth,bournemouth,Bournemouth,bournemouth,1.0,True,ok
-Fulham FC,fulham,Fulham,fulham,1.0,True,ok
-Newcastle United FC,newcastle united,Newcastle,newcastle,0.9563,True,ok
-Nottingham Forest FC,nottingham forest,Nott'm Forest,nott m forest,0.8,True,ok
-West Ham United FC,west ham united,West Ham,west ham,0.9533,True,ok
-Wolverhampton Wanderers FC,wolverhampton wanderers,Wolves,wolves,0.4138,True,low_score

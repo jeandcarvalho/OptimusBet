@@ -1,3 +1,0 @@
-﻿generated_at,competition,fixture_id,utcDate,matchday,side,team_id,team_name,pos,pts,pl,w,d,l,gf,ga,gd,gfpg_now,gapg_now,opponent_team_id,opponent_team_name,opponent_pos_now,pos_tol
-2026-02-02 02:41:43,PD,544440,2026-02-07T13:00:00Z,23,HOME,87,Rayo Vallecano de Madrid,17,22,22,5,7,10,18,30,-12,0.818,1.364,1048,Real Oviedo,20,3
-2026-02-02 02:41:43,PD,544440,2026-02-07T13:00:00Z,23,AWAY,1048,Real Oviedo,20,16,22,3,7,12,12,34,-22,0.545,1.545,87,Rayo Vallecano de Madrid,17,3

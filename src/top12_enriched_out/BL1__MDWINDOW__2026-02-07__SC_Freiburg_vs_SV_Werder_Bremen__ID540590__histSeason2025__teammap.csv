@@ -1,7 +1,0 @@
-api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
-1. FSV Mainz 05,1 fsv mainz 05,Mainz,mainz,0.9357,True,ok
-Bayer 04 Leverkusen,bayer 04 leverkusen,Leverkusen,leverkusen,0.9526,True,ok
-FC St. Pauli 1910,st pauli 1910,St Pauli,st pauli,0.9615,True,ok
-Hamburger SV,hamburger sv,Hamburg,hamburg,0.9583,True,ok
-SC Freiburg,freiburg,Freiburg,freiburg,1.0,True,ok
-SV Werder Bremen,sv werder bremen,Werder Bremen,werder bremen,0.9813,True,ok

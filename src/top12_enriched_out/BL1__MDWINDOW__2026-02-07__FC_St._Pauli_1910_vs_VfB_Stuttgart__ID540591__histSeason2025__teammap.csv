@@ -1,8 +1,0 @@
-api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
-FC Augsburg,augsburg,Augsburg,augsburg,1.0,True,ok
-FC St. Pauli 1910,st pauli 1910,St Pauli,st pauli,0.9615,True,ok
-Hamburger SV,hamburger sv,Hamburg,hamburg,0.9583,True,ok
-RB Leipzig,rb leipzig,RB Leipzig,rb leipzig,1.0,True,ok
-SC Freiburg,freiburg,Freiburg,freiburg,1.0,True,ok
-VfB Stuttgart,vfb stuttgart,Stuttgart,stuttgart,0.9692,True,ok
-VfL Wolfsburg,vfl wolfsburg,Wolfsburg,wolfsburg,0.9692,True,ok

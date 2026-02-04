@@ -1,0 +1,12 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,risk
+AVS,avs,AVS,avs,1.0,ok
+CD Nacional,cd nacional,Nacional,nacional,0.9727,ok
+CD Santa Clara,cd santa clara,Santa Clara,santa clara,0.9786,ok
+Casa Pia AC,casa pia,Casa Pia,casa pia,1.0,ok
+FC Alverca,alverca,Alverca,alverca,1.0,ok
+FC Famalicão,famalicao,Famalicao,famalicao,1.0,ok
+Gil Vicente FC,gil vicente,Gil Vicente,gil vicente,1.0,ok
+Moreirense FC,moreirense,Moreirense,moreirense,1.0,ok
+Rio Ave FC,rio ave,Rio Ave,rio ave,1.0,ok
+Sporting Clube de Braga,sporting braga,Sp Braga,sp braga,0.7273,ok
+Sporting Clube de Portugal,sporting portugal,Porto,porto,0.4545,low_score

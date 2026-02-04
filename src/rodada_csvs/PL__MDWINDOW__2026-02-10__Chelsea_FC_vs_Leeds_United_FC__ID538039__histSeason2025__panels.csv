@@ -1,3 +1,0 @@
-﻿generated_at,competition,fixture_id,utcDate,matchday,side,team_id,team_name,pos,pts,pl,w,d,l,gf,ga,gd,gfpg_now,gapg_now,opponent_team_id,opponent_team_name,opponent_pos_now,pos_tol
-2026-02-02 02:41:52,PL,538039,2026-02-10T19:30:00Z,26,HOME,61,Chelsea FC,5,40,24,11,7,6,42,27,15,1.750,1.125,341,Leeds United FC,16,3
-2026-02-02 02:41:52,PL,538039,2026-02-10T19:30:00Z,26,AWAY,341,Leeds United FC,16,26,24,6,8,10,31,42,-11,1.292,1.750,61,Chelsea FC,5,3

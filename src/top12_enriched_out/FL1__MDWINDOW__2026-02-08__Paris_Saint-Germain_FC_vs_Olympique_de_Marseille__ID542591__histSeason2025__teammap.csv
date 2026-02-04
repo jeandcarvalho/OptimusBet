@@ -1,9 +1,0 @@
-api_name,api_canon,best_fd_name,best_fd_canon,score,accepted,risk
-Angers SCO,angers sco,Angers,angers,0.96,True,ok
-Lille OSC,lille osc,Lille,lille,0.9556,True,ok
-Olympique Lyonnais,olympique lyonnais,Lyon,lyon,0.9222,True,ok
-Olympique de Marseille,olympique marseille,Marseille,marseille,0.9474,True,ok
-Paris Saint-Germain FC,paris saint germain,Paris FC,paris,0.9263,True,ok
-RC Strasbourg Alsace,rc strasbourg alsace,Strasbourg,strasbourg,0.95,True,ok
-Racing Club de Lens,racing lens,Lens,lens,0.9364,True,ok
-Stade Rennais FC 1901,stade rennais 1901,Rennes,rennes,0.4167,True,low_score
