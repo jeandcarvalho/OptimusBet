@@ -81,7 +81,7 @@ function confidenceFromCv(cv: number | null): { pct: number | null; tone: ConfTo
   const pct = Math.round(100 - (clamped / cap) * 100);
 
   const tone: ConfTone = cv <= CV_VERDE_MAX ? "green" : cv <= CV_AMARELO_MAX ? "yellow" : "red";
-  const label = tone === "green" ? "confiança alta" : tone === "yellow" ? "confiança média" : "confiança baixa";
+  const label = tone === "green" ? "alta" : tone === "yellow" ? "média" : "baixa";
   return { pct, tone, label };
 }
 
@@ -475,8 +475,6 @@ function ConfBadge({ pct, tone, label }: { pct: number | null; tone: ConfTone; l
   );
 }
 
-
-
 function StatRowDual({ label, base, sim }: { label: string; base: MetricRead; sim: MetricRead }) {
   const baseConf = confidenceFromCv(base.cv);
   const simConf = confidenceFromCv(sim.cv);
@@ -507,6 +505,76 @@ function StatRowDual({ label, base, sim }: { label: string; base: MetricRead; si
           <div className="text-[10px] uppercase tracking-wide opacity-60">Similares (TOP-12)</div>
           <div className="text-base font-black tabular-nums">{fmtNum(sim.mean, 2)}</div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------
+// ✅ NEW (Desktop): compact table for faster scanning
+// - Mobile keeps the old StatRowDual layout
+// ----------------------------------------------------
+type StatTableRow = { label: string; base: MetricRead; sim: MetricRead };
+
+function StatTableDual({ rows }: { rows: StatTableRow[] }) {
+  // Mobile (cards) ✅
+  // Desktop (table) ✅
+  return (
+    <div className="w-full">
+      <div className="md:hidden">
+        {rows.map((r, idx) => (
+          <StatRowDual key={`${r.label}-${idx}`} label={r.label} base={r.base} sim={r.sim} />
+        ))}
+      </div>
+
+      <div className="hidden md:block max-w-full overflow-x-auto rounded-2xl border border-white/10 bg-black/25">
+        <table className="w-full table-fixed text-left text-[12px]">
+          <thead className="sticky top-0 bg-black/55 backdrop-blur">
+            <tr className="border-b border-white/10 text-[11px] uppercase tracking-wide opacity-70">
+              <th className="px-3 py-2 w-[34%]">Métrica</th>
+              <th className="px-3 py-2 w-[12%] text-right whitespace-nowrap">Âncora</th>
+              <th className="px-3 py-2 w-[16%] whitespace-nowrap">Conf.</th>
+              <th className="px-3 py-2 w-[12%] text-right whitespace-nowrap">TOP-12</th>
+              <th className="px-3 py-2 w-[16%] whitespace-nowrap">Conf.</th>
+              <th className="px-3 py-2 w-[10%] text-right whitespace-nowrap">N</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => {
+              const baseConf = confidenceFromCv(r.base.cv);
+              const simConf = confidenceFromCv(r.sim.cv);
+
+              const nBase = r.base.n == null ? "—" : String(r.base.n);
+              const nSim = r.sim.n == null ? "—" : String(r.sim.n);
+
+              return (
+                <tr key={i} className="border-b border-white/5 last:border-b-0">
+                  <td className="px-3 py-2 font-black">{r.label}</td>
+
+                  <td className="px-3 py-2 text-right font-black tabular-nums whitespace-nowrap">{fmtNum(r.base.mean, 2)}</td>
+                  <td className="px-3 py-2">
+                    <ConfBadge pct={baseConf.pct} tone={baseConf.tone} label={baseConf.label} />
+                  </td>
+
+                  <td className="px-3 py-2 text-right font-black tabular-nums whitespace-nowrap">{fmtNum(r.sim.mean, 2)}</td>
+                  <td className="px-3 py-2">
+                    <ConfBadge pct={simConf.pct} tone={simConf.tone} label={simConf.label} />
+                  </td>
+
+                  <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap opacity-80">
+                    <span className="font-black">{nBase}</span>
+                    <span className="opacity-60"> / </span>
+                    <span className="font-black">{nSim}</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="hidden md:block mt-2 text-[10px] opacity-60">
+     
       </div>
     </div>
   );
@@ -1002,8 +1070,6 @@ export default function Fixture() {
                   <div className="mt-2 text-[16px] sm:text-xl md:text-2xl font-black leading-tight break-words">{awayTitle}</div>
                 </div>
               </div>
-
-
             </div>
           </div>
 
@@ -1029,19 +1095,27 @@ export default function Fixture() {
               >
                 <div className="grid gap-3">
                   <MetricGroup title="Ataque (a favor)">
-                    <StatRowDual label="Gols" base={homeStats.gf.base} sim={homeStats.gf.sim} />
-                    <StatRowDual label="Chutes" base={homeStats.shots.base} sim={homeStats.shots.sim} />
-                    <StatRowDual label="Chutes no alvo" base={homeStats.shotsOn.base} sim={homeStats.shotsOn.sim} />
+                    <StatTableDual
+                      rows={[
+                        { label: "Gols", base: homeStats.gf.base, sim: homeStats.gf.sim },
+                        { label: "Chutes", base: homeStats.shots.base, sim: homeStats.shots.sim },
+                        { label: "Chutes no alvo", base: homeStats.shotsOn.base, sim: homeStats.shotsOn.sim },
+                      ]}
+                    />
                   </MetricGroup>
 
                   <MetricGroup title="Bolas paradas (a favor)">
-                    <StatRowDual label="Escanteios" base={homeStats.corners.base} sim={homeStats.corners.sim} />
+                    <StatTableDual rows={[{ label: "Escanteios", base: homeStats.corners.base, sim: homeStats.corners.sim }]} />
                   </MetricGroup>
 
                   <MetricGroup title="Disciplina (a favor)">
-                    <StatRowDual label="Faltas" base={homeStats.fouls.base} sim={homeStats.fouls.sim} />
-                    <StatRowDual label="Amarelos" base={homeStats.yellows.base} sim={homeStats.yellows.sim} />
-                    <StatRowDual label="Vermelhos" base={homeStats.reds.base} sim={homeStats.reds.sim} />
+                    <StatTableDual
+                      rows={[
+                        { label: "Faltas", base: homeStats.fouls.base, sim: homeStats.fouls.sim },
+                        { label: "Amarelos", base: homeStats.yellows.base, sim: homeStats.yellows.sim },
+                        { label: "Vermelhos", base: homeStats.reds.base, sim: homeStats.reds.sim },
+                      ]}
+                    />
                   </MetricGroup>
                 </div>
               </SectionCard>
@@ -1056,19 +1130,27 @@ export default function Fixture() {
               >
                 <div className="grid gap-3">
                   <MetricGroup title="Ataque (a favor)">
-                    <StatRowDual label="Gols" base={awayStats.gf.base} sim={awayStats.gf.sim} />
-                    <StatRowDual label="Chutes" base={awayStats.shots.base} sim={awayStats.shots.sim} />
-                    <StatRowDual label="Chutes no alvo" base={awayStats.shotsOn.base} sim={awayStats.shotsOn.sim} />
+                    <StatTableDual
+                      rows={[
+                        { label: "Gols", base: awayStats.gf.base, sim: awayStats.gf.sim },
+                        { label: "Chutes", base: awayStats.shots.base, sim: awayStats.shots.sim },
+                        { label: "Chutes no alvo", base: awayStats.shotsOn.base, sim: awayStats.shotsOn.sim },
+                      ]}
+                    />
                   </MetricGroup>
 
                   <MetricGroup title="Bolas paradas (a favor)">
-                    <StatRowDual label="Escanteios" base={awayStats.corners.base} sim={awayStats.corners.sim} />
+                    <StatTableDual rows={[{ label: "Escanteios", base: awayStats.corners.base, sim: awayStats.corners.sim }]} />
                   </MetricGroup>
 
                   <MetricGroup title="Disciplina (a favor)">
-                    <StatRowDual label="Faltas" base={awayStats.fouls.base} sim={awayStats.fouls.sim} />
-                    <StatRowDual label="Amarelos" base={awayStats.yellows.base} sim={awayStats.yellows.sim} />
-                    <StatRowDual label="Vermelhos" base={awayStats.reds.base} sim={awayStats.reds.sim} />
+                    <StatTableDual
+                      rows={[
+                        { label: "Faltas", base: awayStats.fouls.base, sim: awayStats.fouls.sim },
+                        { label: "Amarelos", base: awayStats.yellows.base, sim: awayStats.yellows.sim },
+                        { label: "Vermelhos", base: awayStats.reds.base, sim: awayStats.reds.sim },
+                      ]}
+                    />
                   </MetricGroup>
                 </div>
               </SectionCard>
