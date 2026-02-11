@@ -1,0 +1,8 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,risk
+1. FC Union Berlin,1 union berlin,Union Berlin,union berlin,0.9857,ok
+Bayer 04 Leverkusen,bayer 04 leverkusen,Leverkusen,leverkusen,0.9526,ok
+Borussia Mönchengladbach,borussia monchengladbach,M'gladbach,m gladbach,0.5294,low_score
+Eintracht Frankfurt,eintracht frankfurt,Ein Frankfurt,ein frankfurt,0.8125,ok
+FC Augsburg,augsburg,Augsburg,augsburg,1.0,ok
+FC St. Pauli 1910,st pauli 1910,St Pauli,st pauli,0.9615,ok
+VfL Wolfsburg,vfl wolfsburg,Wolfsburg,wolfsburg,0.9692,ok
