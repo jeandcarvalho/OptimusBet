@@ -1,9 +1,0 @@
-api_name,api_canon,best_fd_name,best_fd_canon,score,risk
-1. FC Köln,1 koln,FC Koln,koln,0.9667,ok
-1. FC Union Berlin,1 union berlin,Union Berlin,union berlin,0.9857,ok
-Borussia Dortmund,borussia dortmund,Dortmund,dortmund,0.9471,ok
-Borussia Mönchengladbach,borussia monchengladbach,M'gladbach,m gladbach,0.5294,low_score
-Eintracht Frankfurt,eintracht frankfurt,Ein Frankfurt,ein frankfurt,0.8125,ok
-FC St. Pauli 1910,st pauli 1910,St Pauli,st pauli,0.9615,ok
-Hamburger SV,hamburger sv,Hamburg,hamburg,0.9583,ok
-SV Werder Bremen,sv werder bremen,Werder Bremen,werder bremen,0.9813,ok

@@ -1,0 +1,10 @@
+api_name,api_canon,best_fd_name,best_fd_canon,score,risk
+Athletic Club,athletic,Valencia,valencia,0.5,low_score
+CA Osasuna,ca osasuna,Osasuna,osasuna,0.97,ok
+Club Atlético de Madrid,atletico madrid,Ath Madrid,ath madrid,0.72,ok
+Deportivo Alavés,deportivo alaves,Alaves,alaves,0.9375,ok
+Elche CF,elche,Elche,elche,1.0,ok
+Getafe CF,getafe,Getafe,getafe,1.0,ok
+Rayo Vallecano de Madrid,rayo vallecano madrid,Vallecano,vallecano,0.9429,ok
+Real Madrid CF,real madrid,Real Madrid,real madrid,1.0,ok
+Villarreal CF,villarreal,Villarreal,villarreal,1.0,ok
